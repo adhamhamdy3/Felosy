@@ -18,6 +18,8 @@ import java.text.DecimalFormat;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
@@ -496,20 +498,20 @@ public class Main {
         System.out.println("Number of Assets: " + currentPortfolio.getAssets().size());
         
         // Display asset distribution
-        Map<String, Float> assetDistribution = new HashMap<>();
+        Map<String, BigDecimal> assetDistribution = new HashMap<>();
         for (Asset asset : currentPortfolio.getAssets()) {
             String assetType = asset.getClass().getSimpleName();
-            float value = asset.getValue();
-            assetDistribution.merge(assetType, value, Float::sum);
+            BigDecimal value = asset.getCurrentValue();
+            assetDistribution.merge(assetType, value, BigDecimal::add);
         }
 
         System.out.println("\nAsset Distribution:");
-        for (Map.Entry<String, Float> entry : assetDistribution.entrySet()) {
-            float percentage = entry.getValue() / currentPortfolio.getNetWorth();
+        for (Map.Entry<String, BigDecimal> entry : assetDistribution.entrySet()) {
+            BigDecimal percentage = entry.getValue().divide(currentPortfolio.getNetWorth(), 4, RoundingMode.HALF_UP);
             System.out.printf("%s: %s (%.2f%%)\n", 
                 entry.getKey(), 
                 currencyFormat.format(entry.getValue()),
-                percentage * 100);
+                percentage.multiply(new BigDecimal("100")).floatValue());
         }
     }
 
@@ -544,7 +546,12 @@ public class Main {
                     String symbol = scanner.nextLine();
                     System.out.print("Enter quantity: ");
                     int quantity = getIntInput(1, Integer.MAX_VALUE);
-                    newAsset = new Stock("STK" + System.currentTimeMillis(), symbol, purchaseDate, symbol, quantity);
+                    System.out.print("Enter purchase price per share: ");
+                    BigDecimal pricePerShare = new BigDecimal(scanner.nextLine());
+                    BigDecimal totalPrice = pricePerShare.multiply(new BigDecimal(quantity));
+                    newAsset = new Stock("STK" + System.currentTimeMillis(), symbol, purchaseDate, 
+                        totalPrice, totalPrice, TickerType.valueOf(symbol), "NYSE", quantity, 
+                        BigDecimal.ZERO, BigDecimal.ZERO);
                     break;
                 case 2:
                     System.out.print("Enter property name: ");
@@ -552,24 +559,42 @@ public class Main {
                     System.out.print("Enter location: ");
                     String location = scanner.nextLine();
                     System.out.print("Enter area (sq ft): ");
-                    float area = getFloatInput();
-                    newAsset = new RealEstate("RE" + System.currentTimeMillis(), name, purchaseDate, location, area);
+                    BigDecimal area = new BigDecimal(scanner.nextLine());
+                    System.out.print("Enter purchase price: ");
+                    BigDecimal purchasePrice = new BigDecimal(scanner.nextLine());
+                    System.out.print("Enter current value: ");
+                    BigDecimal currentValue = new BigDecimal(scanner.nextLine());
+                    System.out.print("Enter monthly rental income: ");
+                    BigDecimal rentalIncome = new BigDecimal(scanner.nextLine());
+                    newAsset = new RealEstate("RE" + System.currentTimeMillis(), name, purchaseDate,
+                        purchasePrice, currentValue, location, area, PropertyType.SINGLE_FAMILY_RESIDENTIAL,
+                        rentalIncome, 1.0f);
                     break;
                 case 3:
                     System.out.print("Enter gold name: ");
                     name = scanner.nextLine();
                     System.out.print("Enter weight (grams): ");
-                    float weight = getFloatInput();
+                    BigDecimal weight = new BigDecimal(scanner.nextLine());
                     System.out.print("Enter purity (0-1): ");
-                    float purity = getFloatInput();
-                    newAsset = new Gold("GLD" + System.currentTimeMillis(), name, purchaseDate, weight, purity);
+                    BigDecimal purity = new BigDecimal(scanner.nextLine());
+                    System.out.print("Enter purchase price: ");
+                    purchasePrice = new BigDecimal(scanner.nextLine());
+                    System.out.print("Enter current value: ");
+                    currentValue = new BigDecimal(scanner.nextLine());
+                    newAsset = new Gold("GLD" + System.currentTimeMillis(), name, purchaseDate,
+                        purchasePrice, currentValue, weight, purity);
                     break;
                 case 4:
                     System.out.print("Enter cryptocurrency symbol: ");
                     symbol = scanner.nextLine();
                     System.out.print("Enter amount: ");
-                    float amount = getFloatInput();
-                    newAsset = new Cryptocurrency("CRY" + System.currentTimeMillis(), symbol, purchaseDate, symbol, amount);
+                    BigDecimal amount = new BigDecimal(scanner.nextLine());
+                    System.out.print("Enter purchase price: ");
+                    purchasePrice = new BigDecimal(scanner.nextLine());
+                    System.out.print("Enter current value: ");
+                    currentValue = new BigDecimal(scanner.nextLine());
+                    newAsset = new Cryptocurrency("CRY" + System.currentTimeMillis(), symbol, purchaseDate,
+                        purchasePrice, currentValue, CoinType.valueOf(symbol), amount);
                     break;
             }
 
@@ -618,7 +643,7 @@ public class Main {
             System.out.printf("ID: %s, Name: %s, Value: %s\n",
                 asset.getAssetId(),
                 asset.getName(),
-                currencyFormat.format(asset.getValue()));
+                currencyFormat.format(asset.getCurrentValue()));
         }
     }
 
@@ -656,19 +681,19 @@ public class Main {
         reportContent.append("Number of Assets: ").append(currentPortfolio.getAssets().size()).append("\n\n");
         
         reportContent.append("Asset Distribution:\n");
-        Map<String, Float> assetDistribution = new HashMap<>();
+        Map<String, BigDecimal> assetDistribution = new HashMap<>();
         for (Asset asset : currentPortfolio.getAssets()) {
             String assetType = asset.getClass().getSimpleName();
-            float value = asset.getValue();
-            assetDistribution.merge(assetType, value, Float::sum);
+            BigDecimal value = asset.getCurrentValue();
+            assetDistribution.merge(assetType, value, BigDecimal::add);
         }
 
-        for (Map.Entry<String, Float> entry : assetDistribution.entrySet()) {
-            float percentage = entry.getValue() / currentPortfolio.getNetWorth();
+        for (Map.Entry<String, BigDecimal> entry : assetDistribution.entrySet()) {
+            BigDecimal percentage = entry.getValue().divide(currentPortfolio.getNetWorth(), 4, RoundingMode.HALF_UP);
             reportContent.append(String.format("%s: %s (%.2f%%)\n", 
                 entry.getKey(), 
                 currencyFormat.format(entry.getValue()),
-                percentage * 100));
+                percentage.multiply(new BigDecimal("100")).floatValue()));
         }
 
         try {
@@ -769,20 +794,20 @@ public class Main {
         reportContent.append("Asset Count: ").append(currentPortfolio.getAssets().size()).append("\n\n");
 
         // Add asset allocation insights
-        Map<String, Float> assetDistribution = new HashMap<>();
+        Map<String, BigDecimal> assetDistribution = new HashMap<>();
         for (Asset asset : currentPortfolio.getAssets()) {
             String assetType = asset.getClass().getSimpleName();
-            float value = asset.getValue();
-            assetDistribution.merge(assetType, value, Float::sum);
+            BigDecimal value = asset.getCurrentValue();
+            assetDistribution.merge(assetType, value, BigDecimal::add);
         }
 
         reportContent.append("Asset Allocation:\n");
-        for (Map.Entry<String, Float> entry : assetDistribution.entrySet()) {
-            float percentage = entry.getValue() / currentPortfolio.getNetWorth();
+        for (Map.Entry<String, BigDecimal> entry : assetDistribution.entrySet()) {
+            BigDecimal percentage = entry.getValue().divide(currentPortfolio.getNetWorth(), 4, RoundingMode.HALF_UP);
             reportContent.append(String.format("%s: %s (%.2f%%)\n", 
                 entry.getKey(), 
                 currencyFormat.format(entry.getValue()),
-                percentage * 100));
+                percentage.multiply(new BigDecimal("100")).floatValue()));
         }
 
         try {
@@ -909,12 +934,9 @@ public class Main {
         String newName = scanner.nextLine();
         if (!newName.isEmpty()) {
             assetToUpdate.setName(newName);
-        }
-
-        if (assetToUpdate.update()) {
             System.out.println("Asset updated successfully!");
         } else {
-            System.out.println("Failed to update asset.");
+            System.out.println("No changes made.");
         }
     }
 
@@ -934,7 +956,7 @@ public class Main {
                 System.out.println("\nAsset Details:");
                 System.out.println("ID: " + asset.getAssetId());
                 System.out.println("Name: " + asset.getName());
-                System.out.println("Value: " + currencyFormat.format(asset.getValue()));
+                System.out.println("Value: " + currencyFormat.format(asset.getCurrentValue()));
                 System.out.println("Purchase Date: " + asset.getPurchaseDate());
                 return;
             }
@@ -955,7 +977,7 @@ public class Main {
 
         for (Asset asset : currentPortfolio.getAssets()) {
             if (asset.getAssetId().equals(assetId)) {
-                float value = asset.getValue();
+                BigDecimal value = asset.getCurrentValue();
                 System.out.printf("Current value of %s: %s\n", 
                     asset.getName(), 
                     currencyFormat.format(value));
@@ -997,12 +1019,12 @@ public class Main {
         }
 
         System.out.println("\n=== Zakat Calculation ===");
-        float totalValue = currentPortfolio.getNetWorth();
-        float zakatRate = 0.025f; // 2.5% Zakat rate
-        float zakatAmount = totalValue * zakatRate;
+        BigDecimal totalValue = currentPortfolio.getNetWorth();
+        BigDecimal zakatRate = new BigDecimal("0.025"); // 2.5% Zakat rate
+        BigDecimal zakatAmount = totalValue.multiply(zakatRate);
 
         System.out.printf("Total Portfolio Value: %s\n", currencyFormat.format(totalValue));
-        System.out.printf("Zakat Rate: %.2f%%\n", zakatRate * 100);
+        System.out.printf("Zakat Rate: %.2f%%\n", zakatRate.multiply(new BigDecimal("100")).floatValue());
         System.out.printf("Zakat Amount Due: %s\n", currencyFormat.format(zakatAmount));
     }
 
@@ -1050,13 +1072,14 @@ public class Main {
         System.out.println("\n=== Investment Strategy ===");
         AssetAllocation allocation = new AssetAllocation(currentPortfolio.getPortfolioId());
         Map<String, Float> currentAllocation = new HashMap<>();
-        float totalValue = currentPortfolio.getNetWorth();
+        BigDecimal totalValue = currentPortfolio.getNetWorth();
 
         // Calculate current allocation
         for (Asset asset : currentPortfolio.getAssets()) {
             String assetType = asset.getClass().getSimpleName();
-            float value = asset.getValue();
-            currentAllocation.merge(assetType, value / totalValue, Float::sum);
+            BigDecimal value = asset.getCurrentValue();
+            float percentage = value.divide(totalValue, 4, RoundingMode.HALF_UP).floatValue();
+            currentAllocation.merge(assetType, percentage, Float::sum);
         }
 
         // Get suggested allocation
@@ -1068,8 +1091,8 @@ public class Main {
             float suggested = suggestedAllocation.get(assetType);
             System.out.printf("%s:\n", assetType);
             System.out.printf("  Current: %.2f%%\n", current * 100);
-            System.out.printf("  Suggested: %.2f%%\n", suggested * 100);
-            System.out.printf("  Difference: %.2f%%\n", (suggested - current) * 100);
+            System.out.printf("  Suggested: %.2f%%\n", suggested);
+            System.out.printf("  Difference: %.2f%%\n", (suggested - current * 100));
         }
     }
 

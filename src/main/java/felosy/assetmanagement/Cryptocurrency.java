@@ -1,60 +1,77 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package felosy.assetmanagement;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
-public class Cryptocurrency extends Asset {
-    private String coinSymbol;
-    private float amount;
-
-    public Cryptocurrency(String assetId, String name, Date purchaseDate, String coinSymbol, float amount) {
-        super(assetId, name, purchaseDate);
-        this.coinSymbol = coinSymbol;
-        this.amount = amount;
+public final class Cryptocurrency extends Asset {
+    private CoinType coin;
+    private BigDecimal amount;
+    
+    public Cryptocurrency(String assetId, String name, Date purchaseDate, BigDecimal purchasePrice, 
+                         BigDecimal currentValue, CoinType coin, BigDecimal amount) {
+        super(assetId, name, purchaseDate, purchasePrice, currentValue);
+        this.coin = coin;
+        setAmount(amount);
     }
-
-    public float fetchPrice() {
+    
+    @Override
+    public BigDecimal fetchPrice() {
         // Implementation to fetch current cryptocurrency price
         // This is a placeholder - real implementation would query market APIs
-        System.out.println("Fetching current price for: " + coinSymbol);
-
-        float currentPrice;
-        switch (coinSymbol.toUpperCase()) {
-            case "BTC":
-                currentPrice = 45000.0f;
+        System.out.println("Fetching current price for: " + coin);
+        BigDecimal price;
+        
+        switch (coin) {
+            case BTC:
+                price = new BigDecimal("45000.0");
                 break;
-            case "ETH":
-                currentPrice = 2500.0f;
+            case ETH:
+                price = new BigDecimal("2500.0");
                 break;
             default:
-                currentPrice = 100.0f;
+                price = new BigDecimal("100.0");
         }
-
-        return currentPrice;
+        
+        setCurrentValue(price);
+        return price;
     }
-
+    
     @Override
-    public float getValue() {
-        return fetchPrice() * amount;
+    public BigDecimal getCurrentValue() {
+        return fetchPrice().multiply(amount);
     }
-
+    
     // Getters and setters
-    public String getCoinSymbol() {
-        return coinSymbol;
+    public CoinType getCoin() {
+        return coin;
     }
-
-    public void setCoinSymbol(String coinSymbol) {
-        this.coinSymbol = coinSymbol;
+    
+    public void setCoin(CoinType coin) {
+        this.coin = coin;
     }
-
-    public float getAmount() {
+    
+    public BigDecimal getAmount() {
         return amount;
     }
-
-    public void setAmount(float amount) {
+    
+    public void setAmount(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Amount cannot be negative");
+        }
         this.amount = amount;
+    }
+    
+    @Override
+    public String toString() {
+        return "Cryptocurrency{" +
+               "assetId='" + getAssetId() + '\'' +
+               ", name='" + getName() + '\'' +
+               ", purchaseDate=" + getPurchaseDate() +
+               ", purchasePrice=" + getPurchasePrice() +
+               ", currentValue=" + getCurrentValue() +
+               ", coin=" + coin +
+               ", amount=" + amount +
+               ", return=" + calculateReturn() +
+               '}';
     }
 }

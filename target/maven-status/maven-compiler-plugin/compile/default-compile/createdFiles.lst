@@ -1,3 +1,5 @@
+felosy\assetmanagement\Stock$Transaction.class
+felosy\assetmanagement\CoinType.class
 felosy\assetmanagement\RealEstate.class
 felosy\integration\CryptoExchange$CryptoAsset.class
 felosy\reporting\FinancialInsight.class
@@ -6,6 +8,7 @@ felosy\islamicfinance\HalalScreening.class
 felosy\assetmanagement\Portfolio.class
 felosy\authentication\User.class
 felosy\integration\ExternalAccountConnector.class
+felosy\assetmanagement\TickerType.class
 felosy\assetmanagement\Cryptocurrency.class
 felosy\integration\BankAccount$Transaction.class
 felosy\integration\Response.class
@@ -13,7 +16,9 @@ felosy\reporting\Report.class
 felosy\assetmanagement\Asset.class
 felosy\financialplanning\RiskAssessment.class
 felosy\assetmanagement\Gold.class
+felosy\assetmanagement\RealEstate$1.class
 felosy\authentication\UserDetails.class
+felosy\assetmanagement\PropertyType.class
 felosy\integration\CryptoExchange$CryptoExchangeConnector.class
 felosy\utils\DataStorage.class
 felosy\integration\CryptoExchange.class
@@ -22,8 +27,10 @@ felosy\integration\StockMarketAccount$StockHolding.class
 felosy\islamicfinance\HalalScreening$Rule.class
 felosy\integration\StockMarketAccount.class
 felosy\reporting\Prediction.class
+felosy\assetmanagement\Cryptocurrency$1.class
 felosy\islamicfinance\ZakatCalculator.class
 felosy\assetmanagement\Stock.class
 felosy\authentication\Authentication.class
+felosy\assetmanagement\Stock$1.class
 felosy\Main.class
 felosy\financialplanning\FinancialGoal.class

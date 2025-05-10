@@ -1,15 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+// Add more attributes and methods
 package felosy.assetmanagement;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class Portfolio implements Serializable {
+public final class Portfolio implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private String portfolioId;
@@ -33,10 +31,10 @@ public class Portfolio implements Serializable {
         return assets.removeIf(asset -> asset.getAssetId().equals(assetId));
     }
 
-    public float getNetWorth() {
-        float totalValue = 0.0f;
+    public BigDecimal getNetWorth() {
+        BigDecimal totalValue = BigDecimal.ZERO;
         for (Asset asset : assets) {
-            totalValue += asset.getValue();
+            totalValue = totalValue.add(asset.getCurrentValue());
         }
         return totalValue;
     }
