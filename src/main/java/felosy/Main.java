@@ -641,23 +641,157 @@ public class Main {
     }
 
     private static void generatePortfolioReport() {
-        if (currentPortfolio == null) {
-            System.out.println("No portfolio available for reporting.");
+        if (!isSessionValid() || currentUser == null || currentPortfolio == null) {
+            System.out.println("Please login to generate reports.");
             return;
         }
 
-        System.out.println("\n=== Generating Portfolio Report ===");
-        Report report = new Report("REP" + System.currentTimeMillis(), "Portfolio Performance", new Date());
+        StringBuilder reportContent = new StringBuilder();
+        reportContent.append("=== Portfolio Report ===\n");
+        reportContent.append("Generated: ").append(LocalDateTime.now()).append("\n");
+        reportContent.append("User: ").append(currentUser.getUserName()).append("\n");
+        reportContent.append("Portfolio ID: ").append(currentPortfolio.getPortfolioId()).append("\n\n");
         
-        // Add portfolio data
-        report.addData("Total Value", currentPortfolio.getNetWorth());
-        report.addData("Asset Count", currentPortfolio.getAssets().size());
-        report.addData("Generation Date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        reportContent.append("Total Net Worth: ").append(currencyFormat.format(currentPortfolio.getNetWorth())).append("\n");
+        reportContent.append("Number of Assets: ").append(currentPortfolio.getAssets().size()).append("\n\n");
+        
+        reportContent.append("Asset Distribution:\n");
+        Map<String, Float> assetDistribution = new HashMap<>();
+        for (Asset asset : currentPortfolio.getAssets()) {
+            String assetType = asset.getClass().getSimpleName();
+            float value = asset.getValue();
+            assetDistribution.merge(assetType, value, Float::sum);
+        }
 
-        // Generate insights
-        FinancialInsight insight = new FinancialInsight(currentPortfolio.getPortfolioId(), "Portfolio Analysis");
-        System.out.println("Report generated successfully!");
-        System.out.println(report);
+        for (Map.Entry<String, Float> entry : assetDistribution.entrySet()) {
+            float percentage = entry.getValue() / currentPortfolio.getNetWorth();
+            reportContent.append(String.format("%s: %s (%.2f%%)\n", 
+                entry.getKey(), 
+                currencyFormat.format(entry.getValue()),
+                percentage * 100));
+        }
+
+        try {
+            DataStorage.saveReport("portfolio", reportContent.toString());
+            System.out.println("Portfolio report generated successfully!");
+            System.out.println("Report saved to: " + DataStorage.getReportPath("portfolio"));
+        } catch (IOException e) {
+            System.out.println("Error saving report: " + e.getMessage());
+        }
+    }
+
+    private static void generateComplianceReport() {
+        if (!isSessionValid() || currentUser == null || currentPortfolio == null) {
+            System.out.println("Please login to generate compliance reports.");
+            return;
+        }
+
+        StringBuilder reportContent = new StringBuilder();
+        reportContent.append("=== Islamic Compliance Report ===\n");
+        reportContent.append("Generated: ").append(LocalDateTime.now()).append("\n");
+        reportContent.append("User: ").append(currentUser.getUserName()).append("\n");
+        reportContent.append("Portfolio ID: ").append(currentPortfolio.getPortfolioId()).append("\n\n");
+
+        HalalScreening screening = new HalalScreening(currentPortfolio.getPortfolioId());
+        Map<String, Boolean> results = screening.getScreeningResults();
+
+        reportContent.append("Compliance Status:\n");
+        int compliantCount = 0;
+        for (Map.Entry<String, Boolean> entry : results.entrySet()) {
+            if (entry.getValue()) {
+                compliantCount++;
+            }
+            reportContent.append(String.format("%s: %s\n",
+                entry.getKey(),
+                entry.getValue() ? "Compliant" : "Non-Compliant"));
+        }
+
+        float complianceRate = (float) compliantCount / results.size() * 100;
+        reportContent.append(String.format("\nOverall Compliance Rate: %.2f%%\n", complianceRate));
+
+        try {
+            DataStorage.saveReport("compliance", reportContent.toString());
+            System.out.println("Compliance report generated successfully!");
+            System.out.println("Report saved to: " + DataStorage.getReportPath("compliance"));
+        } catch (IOException e) {
+            System.out.println("Error saving report: " + e.getMessage());
+        }
+    }
+
+    private static void exportReports() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to export reports.");
+            return;
+        }
+
+        System.out.println("\n=== Export Reports ===");
+        System.out.println("1. Export Portfolio Report");
+        System.out.println("2. Export Compliance Report");
+        System.out.println("3. Export Financial Insights");
+        System.out.println("4. Back to Main Menu");
+        System.out.print("Enter your choice: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        switch (choice) {
+            case 1:
+                generatePortfolioReport();
+                break;
+            case 2:
+                generateComplianceReport();
+                break;
+            case 3:
+                generateFinancialInsights();
+                break;
+            case 4:
+                return;
+            default:
+                System.out.println("Invalid choice.");
+        }
+    }
+
+    private static void generateFinancialInsights() {
+        if (!isSessionValid() || currentUser == null || currentPortfolio == null) {
+            System.out.println("Please login to generate financial insights.");
+            return;
+        }
+
+        StringBuilder reportContent = new StringBuilder();
+        reportContent.append("=== Financial Insights Report ===\n");
+        reportContent.append("Generated: ").append(LocalDateTime.now()).append("\n");
+        reportContent.append("User: ").append(currentUser.getUserName()).append("\n");
+        reportContent.append("Portfolio ID: ").append(currentPortfolio.getPortfolioId()).append("\n\n");
+
+        // Add financial insights analysis
+        reportContent.append("Portfolio Analysis:\n");
+        reportContent.append("Total Value: ").append(currencyFormat.format(currentPortfolio.getNetWorth())).append("\n");
+        reportContent.append("Asset Count: ").append(currentPortfolio.getAssets().size()).append("\n\n");
+
+        // Add asset allocation insights
+        Map<String, Float> assetDistribution = new HashMap<>();
+        for (Asset asset : currentPortfolio.getAssets()) {
+            String assetType = asset.getClass().getSimpleName();
+            float value = asset.getValue();
+            assetDistribution.merge(assetType, value, Float::sum);
+        }
+
+        reportContent.append("Asset Allocation:\n");
+        for (Map.Entry<String, Float> entry : assetDistribution.entrySet()) {
+            float percentage = entry.getValue() / currentPortfolio.getNetWorth();
+            reportContent.append(String.format("%s: %s (%.2f%%)\n", 
+                entry.getKey(), 
+                currencyFormat.format(entry.getValue()),
+                percentage * 100));
+        }
+
+        try {
+            DataStorage.saveReport("insights", reportContent.toString());
+            System.out.println("Financial insights report generated successfully!");
+            System.out.println("Report saved to: " + DataStorage.getReportPath("insights"));
+        } catch (IOException e) {
+            System.out.println("Error saving report: " + e.getMessage());
+        }
     }
 
     private static void connectStockMarketAccount() {
@@ -972,45 +1106,6 @@ public class Main {
 
         System.out.printf("Generated prediction for %d days from now\n", days);
         System.out.println("Prediction ID: " + prediction.getPredictionId());
-    }
-
-    private static void exportReports() {
-        if (currentPortfolio == null) {
-            System.out.println("No portfolio available for report export.");
-            return;
-        }
-
-        System.out.println("\n=== Export Reports ===");
-        System.out.println("1. Export Portfolio Report");
-        System.out.println("2. Export Compliance Report");
-        System.out.println("3. Export Financial Insights");
-        System.out.print("Enter your choice: ");
-
-        int choice = getIntInput(1, 3);
-        Report report = null;
-
-        switch (choice) {
-            case 1:
-                report = new Report("REP" + System.currentTimeMillis(), "Portfolio Performance", new Date());
-                report.addData("Total Value", currentPortfolio.getNetWorth());
-                report.addData("Asset Count", currentPortfolio.getAssets().size());
-                break;
-            case 2:
-                report = new Report("REP" + System.currentTimeMillis(), "Compliance Report", new Date());
-                HalalScreening screening = new HalalScreening(currentPortfolio.getPortfolioId());
-                report.addData("Screening Results", screening.getScreeningResults());
-                break;
-            case 3:
-                report = new Report("REP" + System.currentTimeMillis(), "Financial Insights", new Date());
-                FinancialInsight insight = new FinancialInsight(currentPortfolio.getPortfolioId(), "Portfolio Analysis");
-                // Add insight data to report
-                break;
-        }
-
-        if (report != null) {
-            System.out.println("Report generated successfully!");
-            System.out.println(report);
-        }
     }
 
     private static void connectBankAccount() {

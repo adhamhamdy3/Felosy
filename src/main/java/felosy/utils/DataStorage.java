@@ -3,18 +3,39 @@ package felosy.utils;
 import java.io.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class DataStorage {
     private static final String DATA_DIR = "data";
+    private static final String REPORTS_DIR = "reports";
     private static final String USERS_FILE = "users.ser";
     private static final String PORTFOLIOS_FILE = "portfolios.ser";
     private static final String ASSETS_FILE = "assets.ser";
+    private static final DateTimeFormatter REPORT_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     static {
-        // Create data directory if it doesn't exist
-        File dir = new File(DATA_DIR);
+        // Create data and reports directories if they don't exist
+        createDirectoryIfNotExists(DATA_DIR);
+        createDirectoryIfNotExists(REPORTS_DIR);
+    }
+
+    private static void createDirectoryIfNotExists(String dirPath) {
+        File dir = new File(dirPath);
         if (!dir.exists()) {
             dir.mkdirs();
+        }
+    }
+
+    public static String getReportPath(String reportType) {
+        String timestamp = LocalDateTime.now().format(REPORT_DATE_FORMAT);
+        return REPORTS_DIR + File.separator + reportType + "_" + timestamp + ".txt";
+    }
+
+    public static void saveReport(String reportType, String content) throws IOException {
+        String reportPath = getReportPath(reportType);
+        try (FileWriter writer = new FileWriter(reportPath)) {
+            writer.write(content);
         }
     }
 
