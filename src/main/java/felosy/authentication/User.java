@@ -4,17 +4,44 @@
  */
 package felosy.authentication;
 
+import java.io.Serializable;
 import java.util.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
-public class User {
+public class User implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     private String userId;
     private String userName;
     private String email;
+    private String passwordHash; // Store hashed password instead of plain text
 
-    public User(String userName, String email) {
+    public User(String userName, String email, String password) {
         this.userId = UUID.randomUUID().toString();
         this.userName = userName;
         this.email = email;
+        this.passwordHash = hashPassword(password);
+    }
+
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error hashing password", e);
+        }
+    }
+
+    public boolean authenticate(String password) {
+        return passwordHash.equals(hashPassword(password));
     }
 
     public boolean register() {
@@ -53,5 +80,9 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public void setPassword(String newPassword) {
+        this.passwordHash = hashPassword(newPassword);
     }
 }

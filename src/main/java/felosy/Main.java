@@ -10,31 +10,87 @@ import felosy.reporting.Report;
 import felosy.reporting.FinancialInsight;
 import felosy.reporting.Prediction;
 import felosy.integration.*;
+import felosy.utils.DataStorage;
 
 import java.util.*;
 import java.text.SimpleDateFormat;
 import java.text.DecimalFormat;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final DecimalFormat currencyFormat = new DecimalFormat("$#,##0.00");
     private static final DecimalFormat percentFormat = new DecimalFormat("#0.00%");
+    private static List<User> users;
+    private static List<Portfolio> portfolios;
+    private static List<Asset> assets;
     private static User currentUser;
     private static Portfolio currentPortfolio;
     private static Authentication auth;
     private static boolean isRunning = true;
+    private static LocalDateTime lastActivity;
+    private static final int SESSION_TIMEOUT_MINUTES = 30;
 
     public static void main(String[] args) {
         System.out.println("Welcome to Felosy - Islamic Finance Management System");
         System.out.println("==================================================");
 
+        try {
+            // Load data from files
+            users = DataStorage.loadUsers();
+            portfolios = DataStorage.loadPortfolios();
+            assets = DataStorage.loadAssets();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading data: " + e.getMessage());
+            users = new ArrayList<>();
+            portfolios = new ArrayList<>();
+            assets = new ArrayList<>();
+        }
+
         while (isRunning) {
-            if (currentUser == null) {
-                showLoginMenu();
+            if (isSessionValid()) {
+                if (currentUser == null) {
+                    showLoginMenu();
+                } else {
+                    showMainMenu();
+                }
             } else {
-                showMainMenu();
+                showLoginMenu();
             }
         }
+
+        // Save data before exiting
+        try {
+            DataStorage.saveUsers(users);
+            DataStorage.savePortfolios(portfolios);
+            DataStorage.saveAssets(assets);
+        } catch (IOException e) {
+            System.out.println("Error saving data: " + e.getMessage());
+        }
+
+        scanner.close();
+    }
+
+    private static boolean isSessionValid() {
+        if (currentUser == null || lastActivity == null) {
+            return false;
+        }
+        
+        long minutesSinceLastActivity = ChronoUnit.MINUTES.between(lastActivity, LocalDateTime.now());
+        if (minutesSinceLastActivity >= SESSION_TIMEOUT_MINUTES) {
+            System.out.println("Session expired. Please login again.");
+            handleLogout();
+            return false;
+        }
+        
+        updateLastActivity();
+        return true;
+    }
+
+    private static void updateLastActivity() {
+        lastActivity = LocalDateTime.now();
     }
 
     private static void showLoginMenu() {
@@ -101,41 +157,84 @@ public class Main {
     }
 
     private static void handleLogin() {
-        System.out.println("\n=== Login ===");
         System.out.print("Enter username: ");
         String username = scanner.nextLine();
-        System.out.print("Enter email: ");
-        String email = scanner.nextLine();
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine();
 
-        currentUser = new User(username, email);
-        auth = new Authentication();
-        if (auth.login(currentUser)) {
+        currentUser = users.stream()
+                .filter(u -> u.getUserName().equals(username))
+                .findFirst()
+                .orElse(null);
+
+        if (currentUser != null && currentUser.authenticate(password)) {
             System.out.println("Login successful!");
-            currentPortfolio = new Portfolio(currentUser.getUserId());
-            loadInitialData();
+            // Load user's portfolio
+            currentPortfolio = portfolios.stream()
+                    .filter(p -> p.getUserId().equals(currentUser.getUserId()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        Portfolio newPortfolio = new Portfolio(currentUser.getUserId());
+                        portfolios.add(newPortfolio);
+                        try {
+                            DataStorage.savePortfolios(portfolios);
+                        } catch (IOException e) {
+                            System.out.println("Error saving portfolio: " + e.getMessage());
+                        }
+                        return newPortfolio;
+                    });
+            showMainMenu();
         } else {
-            System.out.println("Login failed. Please try again.");
-            currentUser = null;
+            System.out.println("Invalid username or password.");
         }
     }
 
     private static void handleRegistration() {
-        System.out.println("\n=== Registration ===");
         System.out.print("Enter username: ");
         String username = scanner.nextLine();
+        
+        // Check if username already exists
+        if (users.stream().anyMatch(u -> u.getUserName().equals(username))) {
+            System.out.println("Username already exists. Please choose a different username.");
+            return;
+        }
+        
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine();
+        System.out.print("Confirm password: ");
+        String confirmPassword = scanner.nextLine();
+        
+        if (!password.equals(confirmPassword)) {
+            System.out.println("Passwords do not match.");
+            return;
+        }
+        
         System.out.print("Enter email: ");
         String email = scanner.nextLine();
+        
+        // Validate email format
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            System.out.println("Invalid email format.");
+            return;
+        }
 
-        currentUser = new User(username, email);
-        if (currentUser.register()) {
+        User newUser = new User(username, email, password);
+        users.add(newUser);
+        
+        try {
+            DataStorage.saveUsers(users);
             System.out.println("Registration successful! Please login.");
-        } else {
-            System.out.println("Registration failed. Please try again.");
-            currentUser = null;
+        } catch (IOException e) {
+            System.out.println("Error saving user data: " + e.getMessage());
         }
     }
 
     private static void handlePortfolioManagement() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to access portfolio management.");
+            return;
+        }
+
         System.out.println("\n=== Portfolio Management ===");
         System.out.println("1. View Portfolio Summary");
         System.out.println("2. Add New Asset");
@@ -162,6 +261,11 @@ public class Main {
     }
 
     private static void handleAssetManagement() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to access asset management.");
+            return;
+        }
+
         System.out.println("\n=== Asset Management ===");
         System.out.println("1. View All Assets");
         System.out.println("2. View Asset Details");
@@ -184,6 +288,11 @@ public class Main {
     }
 
     private static void handleIslamicCompliance() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to access Islamic compliance features.");
+            return;
+        }
+
         System.out.println("\n=== Islamic Finance Compliance ===");
         System.out.println("1. Run Halal Screening");
         System.out.println("2. View Compliance Report");
@@ -206,6 +315,11 @@ public class Main {
     }
 
     private static void handleFinancialPlanning() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to access financial planning features.");
+            return;
+        }
+
         System.out.println("\n=== Financial Planning ===");
         System.out.println("1. Set Financial Goals");
         System.out.println("2. View Asset Allocation");
@@ -228,6 +342,11 @@ public class Main {
     }
 
     private static void handleReportsAndInsights() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to access reports and insights.");
+            return;
+        }
+
         System.out.println("\n=== Reports & Insights ===");
         System.out.println("1. Generate Portfolio Report");
         System.out.println("2. View Financial Insights");
@@ -254,6 +373,11 @@ public class Main {
     }
 
     private static void handleExternalAccounts() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to access external accounts.");
+            return;
+        }
+
         System.out.println("\n=== External Accounts ===");
         System.out.println("1. Connect Stock Market Account");
         System.out.println("2. Connect Crypto Exchange");
@@ -280,6 +404,11 @@ public class Main {
     }
 
     private static void handleUserProfile() {
+        if (currentUser == null) {
+            System.out.println("No user logged in.");
+            return;
+        }
+
         System.out.println("\n=== User Profile ===");
         System.out.println("1. View Profile");
         System.out.println("2. Update Profile");
@@ -287,7 +416,9 @@ public class Main {
         System.out.println("4. Back to Main Menu");
         System.out.print("Enter your choice: ");
 
-        int choice = getIntInput(1, 4);
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
         switch (choice) {
             case 1:
                 viewProfile();
@@ -298,6 +429,10 @@ public class Main {
             case 3:
                 changePassword();
                 break;
+            case 4:
+                return;
+            default:
+                System.out.println("Invalid choice.");
         }
     }
 
@@ -307,6 +442,7 @@ public class Main {
         }
         currentUser = null;
         currentPortfolio = null;
+        lastActivity = null;
         System.out.println("Logged out successfully.");
     }
 
@@ -371,6 +507,17 @@ public class Main {
     }
 
     private static void addNewAsset() {
+        if (!isSessionValid() || currentUser == null || currentPortfolio == null) {
+            System.out.println("Please login to add assets.");
+            return;
+        }
+
+        // Verify portfolio ownership
+        if (!currentPortfolio.getUserId().equals(currentUser.getUserId())) {
+            System.out.println("Unauthorized access to portfolio.");
+            return;
+        }
+
         System.out.println("\n=== Add New Asset ===");
         System.out.println("Select asset type:");
         System.out.println("1. Stock");
@@ -430,8 +577,14 @@ public class Main {
     }
 
     private static void removeAsset() {
-        if (currentPortfolio == null || currentPortfolio.getAssets().isEmpty()) {
-            System.out.println("No assets to remove.");
+        if (!isSessionValid() || currentUser == null || currentPortfolio == null) {
+            System.out.println("Please login to remove assets.");
+            return;
+        }
+
+        // Verify portfolio ownership
+        if (!currentPortfolio.getUserId().equals(currentUser.getUserId())) {
+            System.out.println("Unauthorized access to portfolio.");
             return;
         }
 
@@ -536,11 +689,11 @@ public class Main {
 
     private static void viewProfile() {
         if (currentUser == null) {
-            System.out.println("No user profile available.");
+            System.out.println("No user logged in.");
             return;
         }
 
-        System.out.println("\n=== User Profile ===");
+        System.out.println("\n=== Profile Information ===");
         System.out.println("Username: " + currentUser.getUserName());
         System.out.println("Email: " + currentUser.getEmail());
         System.out.println("User ID: " + currentUser.getUserId());
@@ -548,33 +701,48 @@ public class Main {
 
     private static void updateProfile() {
         if (currentUser == null) {
-            System.out.println("No user profile available.");
+            System.out.println("No user logged in.");
             return;
         }
 
-        System.out.println("\n=== Update Profile ===");
         System.out.print("Enter new username (or press Enter to keep current): ");
         String newUsername = scanner.nextLine();
         if (!newUsername.isEmpty()) {
+            // Check if new username is already taken
+            if (users.stream().anyMatch(u -> u.getUserName().equals(newUsername) && !u.getUserId().equals(currentUser.getUserId()))) {
+                System.out.println("Username already exists. Please choose a different username.");
+                return;
+            }
             currentUser.setUserName(newUsername);
         }
 
         System.out.print("Enter new email (or press Enter to keep current): ");
         String newEmail = scanner.nextLine();
         if (!newEmail.isEmpty()) {
+            if (!newEmail.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                System.out.println("Invalid email format.");
+                return;
+            }
             currentUser.setEmail(newEmail);
         }
 
-        if (currentUser.updateProfile()) {
+        try {
+            DataStorage.saveUsers(users);
             System.out.println("Profile updated successfully!");
-        } else {
-            System.out.println("Failed to update profile.");
+        } catch (IOException e) {
+            System.out.println("Error saving user data: " + e.getMessage());
         }
     }
 
     private static void updateAssetDetails() {
-        if (currentPortfolio == null || currentPortfolio.getAssets().isEmpty()) {
-            System.out.println("No assets available to update.");
+        if (!isSessionValid() || currentUser == null || currentPortfolio == null) {
+            System.out.println("Please login to update assets.");
+            return;
+        }
+
+        // Verify portfolio ownership
+        if (!currentPortfolio.getUserId().equals(currentUser.getUserId())) {
+            System.out.println("Unauthorized access to portfolio.");
             return;
         }
 
@@ -861,14 +1029,19 @@ public class Main {
     }
 
     private static void changePassword() {
-        if (currentUser == null || auth == null) {
-            System.out.println("No user profile available.");
+        if (currentUser == null) {
+            System.out.println("No user logged in.");
             return;
         }
 
-        System.out.println("\n=== Change Password ===");
         System.out.print("Enter current password: ");
         String currentPassword = scanner.nextLine();
+        
+        if (!currentUser.authenticate(currentPassword)) {
+            System.out.println("Current password is incorrect.");
+            return;
+        }
+
         System.out.print("Enter new password: ");
         String newPassword = scanner.nextLine();
         System.out.print("Confirm new password: ");
@@ -879,13 +1052,12 @@ public class Main {
             return;
         }
 
-        // Since we don't have a direct password change method, we'll simulate it
-        // by logging out and logging back in with the new password
-        auth.logout();
-        if (auth.login(currentUser)) {
+        currentUser.setPassword(newPassword);
+        try {
+            DataStorage.saveUsers(users);
             System.out.println("Password changed successfully!");
-        } else {
-            System.out.println("Failed to change password.");
+        } catch (IOException e) {
+            System.out.println("Error saving user data: " + e.getMessage());
         }
     }
 

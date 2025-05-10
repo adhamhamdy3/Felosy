@@ -15,6 +15,7 @@ felosy\financialplanning\RiskAssessment.class
 felosy\assetmanagement\Gold.class
 felosy\authentication\UserDetails.class
 felosy\integration\CryptoExchange$CryptoExchangeConnector.class
+felosy\utils\DataStorage.class
 felosy\integration\CryptoExchange.class
 felosy\integration\BankAccount.class
 felosy\integration\StockMarketAccount$StockHolding.class
