@@ -50,12 +50,8 @@ public class Main {
         }
 
         while (isRunning) {
-            if (isSessionValid()) {
-                if (currentUser == null) {
-                    showLoginMenu();
-                } else {
-                    showMainMenu();
-                }
+            if (currentUser != null && isSessionValid()) {
+                showMainMenu();
             } else {
                 showLoginMenu();
             }
@@ -116,6 +112,10 @@ public class Main {
     }
 
     private static void showMainMenu() {
+        if (!isSessionValid()) {
+            return;
+        }
+
         System.out.println("\n=== Main Menu ===");
         System.out.println("1. Portfolio Management");
         System.out.println("2. Asset Management");
@@ -127,7 +127,9 @@ public class Main {
         System.out.println("8. Logout");
         System.out.print("Enter your choice: ");
 
-        int choice = getIntInput(1, 8);
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
         switch (choice) {
             case 1:
                 handlePortfolioManagement();
@@ -153,6 +155,8 @@ public class Main {
             case 8:
                 handleLogout();
                 break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
         }
     }
 
@@ -169,6 +173,8 @@ public class Main {
 
         if (currentUser != null && currentUser.authenticate(password)) {
             System.out.println("Login successful!");
+            // Initialize session
+            updateLastActivity();
             // Load user's portfolio
             currentPortfolio = portfolios.stream()
                     .filter(p -> p.getUserId().equals(currentUser.getUserId()))
@@ -183,9 +189,10 @@ public class Main {
                         }
                         return newPortfolio;
                     });
-            showMainMenu();
         } else {
             System.out.println("Invalid username or password.");
+            currentUser = null;
+            currentPortfolio = null;
         }
     }
 
