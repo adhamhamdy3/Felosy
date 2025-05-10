@@ -16,7 +16,6 @@ felosy\assetmanagement\Gold.class
 felosy\authentication\UserDetails.class
 felosy\integration\CryptoExchange$CryptoExchangeConnector.class
 felosy\integration\CryptoExchange.class
-felosy\Felosy.class
 felosy\integration\BankAccount.class
 felosy\integration\StockMarketAccount$StockHolding.class
 felosy\islamicfinance\HalalScreening$Rule.class
@@ -25,4 +24,5 @@ felosy\reporting\Prediction.class
 felosy\islamicfinance\ZakatCalculator.class
 felosy\assetmanagement\Stock.class
 felosy\authentication\Authentication.class
+felosy\Main.class
 felosy\financialplanning\FinancialGoal.class
