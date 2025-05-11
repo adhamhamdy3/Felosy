@@ -7,16 +7,13 @@ package felosy.reporting;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
-import java.io.File;
+import java.util.logging.Level;
 
 /**
  * Report class for generating various types of financial reports
+ * Simplified for academic purposes
  */
-public class Report {
-    private String reportId;
-    private String reportType;
-    private Date generationDate;
-    private Map<String, Object> reportData;
+public class Report extends BaseReport {
     private String recipientEmail;
     private boolean isGenerated;
     
@@ -28,94 +25,44 @@ public class Report {
      * @param generationDate Date when the report was generated
      */
     public Report(String reportId, String reportType, Date generationDate) {
-        this.reportId = reportId;
-        this.reportType = reportType;
+        super(reportId, reportType);
         this.generationDate = generationDate;
-        this.reportData = new HashMap<>();
         this.isGenerated = false;
     }
     
-    /**
-     * Add data to the report
-     * 
-     * @param key Data identifier
-     * @param value Data value
-     */
-    public void addData(String key, Object value) {
-        reportData.put(key, value);
-    }
-    
-    /**
-     * Generate PDF version of the report
-     * 
-     * @return True if generation was successful
-     */
-    public boolean generatePDF() {
-        System.out.println("Generating PDF report: " + reportId);
+    @Override
+    public String generateContent() {
+        StringBuilder content = new StringBuilder();
+        content.append("=== ").append(reportType).append(" ===\n");
+        content.append("Report ID: ").append(reportId).append("\n");
+        content.append("Generated: ").append(generationDate).append("\n\n");
         
-        if (reportData.isEmpty()) {
-            System.err.println("Cannot generate PDF: No data available for report " + reportId);
-            return false;
+        for (Map.Entry<String, Object> entry : reportData.entrySet()) {
+            content.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
         }
         
-        try {
-            // Implementation would use a PDF library (like iText or PDFBox) to create the document
-            System.out.println("Creating PDF file with " + reportData.size() + " data points");
-            System.out.println("PDF report successfully generated: " + getFileName("pdf"));
-            isGenerated = true;
-            return true;
-        } catch (Exception e) {
-            System.err.println("Failed to generate PDF report: " + e.getMessage());
-            return false;
-        }
-    }
-    
-    /**
-     * Generate Excel version of the report
-     * 
-     * @return True if generation was successful
-     */
-    public boolean generateExcel() {
-        System.out.println("Generating Excel report: " + reportId);
-        
-        if (reportData.isEmpty()) {
-            System.err.println("Cannot generate Excel: No data available for report " + reportId);
-            return false;
-        }
-        
-        try {
-            // Implementation would use Excel library like Apache POI
-            System.out.println("Creating Excel workbook with " + reportData.size() + " data points");
-            System.out.println("Excel report successfully generated: " + getFileName("xlsx"));
-            isGenerated = true;
-            return true;
-        } catch (Exception e) {
-            System.err.println("Failed to generate Excel report: " + e.getMessage());
-            return false;
-        }
+        isGenerated = true;
+        return content.toString();
     }
     
     /**
      * Send the report via email
-     * 
-     * @param recipientEmail Email address to send the report to
-     * @return True if email was sent successfully
      */
     public boolean sendEmail(String recipientEmail) {
         if (!isGenerated) {
-            System.err.println("Cannot send email: Report has not been generated yet");
+            LOGGER.warning("Cannot send email: Report has not been generated yet");
             return false;
         }
         
         this.recipientEmail = recipientEmail;
-        System.out.println("Sending report " + reportId + " by email to: " + recipientEmail);
+        LOGGER.info("Sending report " + reportId + " by email to: " + recipientEmail);
         
         try {
-            // Implementation would use JavaMail or similar to send the report
-            System.out.println("Email sent successfully with report attached");
+            // Simplified email sending for academic purposes
+            System.out.println("Email content:\n" + generateContent());
             return true;
         } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Failed to send email", e);
             return false;
         }
     }
@@ -174,31 +121,11 @@ public class Report {
      * @return True if the file exists
      */
     public boolean fileExists(String extension) {
-        File file = new File(getFileName(extension));
+        java.io.File file = new java.io.File(getFileName(extension));
         return file.exists();
     }
     
     // Getters and Setters
-    public String getReportId() {
-        return reportId;
-    }
-    
-    public String getReportType() {
-        return reportType;
-    }
-    
-    public void setReportType(String reportType) {
-        this.reportType = reportType;
-    }
-    
-    public Date getGenerationDate() {
-        return generationDate;
-    }
-    
-    public Map<String, Object> getReportData() {
-        return new HashMap<>(reportData);
-    }
-    
     public boolean isGenerated() {
         return isGenerated;
     }

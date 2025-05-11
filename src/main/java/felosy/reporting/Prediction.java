@@ -4,7 +4,6 @@
  */
 package felosy.reporting;
 
-
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
@@ -13,16 +12,15 @@ import java.util.ArrayList;
 
 /**
  * Prediction class for storing and managing financial forecasts
+ * Simplified for academic purposes
  */
-public class Prediction {
-    private String predictionId;
+public class Prediction extends BaseReport {
     private String portfolioId;
-    private Date creationDate;
     private Date targetDate;
     private float confidenceLevel;
     private Map<String, Float> forecastValues;
     private List<String> assumptions;
-    private String scenarioType; // e.g., "Baseline", "Conservative", "Optimistic"
+    private String scenarioType;
     
     /**
      * Constructor for creating a new prediction
@@ -35,9 +33,8 @@ public class Prediction {
      */
     public Prediction(String predictionId, String portfolioId, Date targetDate, 
                      float confidenceLevel, String scenarioType) {
-        this.predictionId = predictionId;
+        super(predictionId, "Prediction Report");
         this.portfolioId = portfolioId;
-        this.creationDate = new Date(); // Current date
         this.targetDate = targetDate;
         this.confidenceLevel = confidenceLevel;
         this.scenarioType = scenarioType;
@@ -53,15 +50,6 @@ public class Prediction {
      */
     public void addForecastValue(String metric, float value) {
         forecastValues.put(metric, value);
-    }
-    
-    /**
-     * Add multiple forecast values
-     * 
-     * @param forecasts Map of metrics to their predicted values
-     */
-    public void addForecastValues(Map<String, Float> forecasts) {
-        forecastValues.putAll(forecasts);
     }
     
     /**
@@ -90,11 +78,10 @@ public class Prediction {
      * @return True if the prediction is still valid
      */
     public boolean isValid(int validityDays) {
-        long diff = new Date().getTime() - creationDate.getTime();
+        long diff = targetDate.getTime() - new Date().getTime();
         long diffDays = diff / (24 * 60 * 60 * 1000);
         return diffDays <= validityDays;
     }
-    
     /**
      * Adjust the confidence level based on new data
      * 
@@ -122,55 +109,40 @@ public class Prediction {
         return forecastValues.get(metric);
     }
     
-    /**
-     * Create a report of this prediction
-     * 
-     * @return Report object containing the prediction data
-     */
-    public Report generateReport() {
-        String reportId = "PRED-" + predictionId.substring(0, 8);
-        Report report = new Report(reportId, "Prediction Report", new Date());
+    @Override
+    public String generateContent() {
+        StringBuilder content = new StringBuilder();
+        content.append("=== Financial Prediction Report ===\n\n");
+        content.append("Portfolio ID: ").append(portfolioId).append("\n");
+        content.append("Target Date: ").append(targetDate).append("\n");
+        content.append("Confidence Level: ").append(confidenceLevel * 100).append("%\n");
+        content.append("Scenario Type: ").append(scenarioType).append("\n\n");
         
-        // Add prediction data to the report
-        report.addData("predictionId", predictionId);
-        report.addData("portfolioId", portfolioId);
-        report.addData("creationDate", creationDate);
-        report.addData("targetDate", targetDate);
-        report.addData("confidenceLevel", confidenceLevel);
-        report.addData("scenarioType", scenarioType);
-        report.addData("forecasts", new HashMap<>(forecastValues));
-        report.addData("assumptions", new ArrayList<>(assumptions));
+        content.append("Forecast Values:\n");
+        for (Map.Entry<String, Float> entry : forecastValues.entrySet()) {
+            content.append("- ").append(entry.getKey())
+                   .append(": ").append(entry.getValue()).append("\n");
+        }
         
-        return report;
+        content.append("\nAssumptions:\n");
+        for (String assumption : assumptions) {
+            content.append("- ").append(assumption).append("\n");
+        }
+        
+        return content.toString();
     }
     
-    // Getters and Setters
-    public String getPredictionId() {
-        return predictionId;
-    }
-    
+    // Getters
     public String getPortfolioId() {
         return portfolioId;
-    }
-    
-    public Date getCreationDate() {
-        return creationDate;
     }
     
     public Date getTargetDate() {
         return targetDate;
     }
     
-    public void setTargetDate(Date targetDate) {
-        this.targetDate = targetDate;
-    }
-    
     public float getConfidenceLevel() {
         return confidenceLevel;
-    }
-    
-    public void setConfidenceLevel(float confidenceLevel) {
-        this.confidenceLevel = confidenceLevel;
     }
     
     public Map<String, Float> getForecastValues() {
@@ -185,16 +157,9 @@ public class Prediction {
         return scenarioType;
     }
     
-    public void setScenarioType(String scenarioType) {
-        this.scenarioType = scenarioType;
-    }
-    
     @Override
     public String toString() {
-        return "Prediction [id=" + predictionId + 
-               ", portfolio=" + portfolioId + 
-               ", scenario=" + scenarioType +
-               ", confidence=" + confidenceLevel + 
-               ", metrics=" + forecastValues.size() + "]";
+        return String.format("Prediction [id=%s, portfolio=%s, scenario=%s, confidence=%.2f]",
+            reportId, portfolioId, scenarioType, confidenceLevel);
     }
 }

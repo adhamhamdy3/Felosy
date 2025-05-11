@@ -6,21 +6,37 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Date;
 
 /**
  * Represents a connection to a stock trading platform
  */
-public class StockMarketAccount {
+public class StockMarketAccount extends IslamicFinanceConnector {
     private String accountId;
     private String platformName;
     private ExternalAccountConnector connector;
     private boolean isConnected;
     private static final Logger LOGGER = Logger.getLogger(StockMarketAccount.class.getName());
-
+    
+    private Map<String, Double> portfolio;
+    private Map<String, Boolean> shariahCompliance;
+    private List<Transaction> transactionHistory;
+    private double totalValue;
+    
     public StockMarketAccount(String accountId, String platformName) {
+        super("stock-" + platformName.toLowerCase(), 
+              "sk_" + platformName.toLowerCase().replace(" ", ""), 
+              getPlatformApiUrl(platformName), 
+              "ISLAMIC_STOCK_MARKET");
         this.accountId = accountId;
         this.platformName = platformName;
         this.isConnected = false;
+        this.portfolio = new HashMap<>();
+        this.shariahCompliance = new HashMap<>();
+        this.transactionHistory = new ArrayList<>();
+        this.totalValue = 0.0;
     }
     
     /**
@@ -29,17 +45,7 @@ public class StockMarketAccount {
      */
     public boolean connect() {
         try {
-            // Create appropriate connector based on platform name
-            String baseUrl = getPlatformApiUrl(platformName);
-            String apiKey = getStoredApiKey(platformName, accountId);
-            
-            if (apiKey == null || baseUrl == null) {
-                LOGGER.severe("Missing API key or base URL for " + platformName);
-                return false;
-            }
-            
-            connector = new ExternalAccountConnector("stock-" + platformName.toLowerCase(), apiKey, baseUrl);
-            isConnected = connector.establishConnection();
+            isConnected = super.establishConnection();
             
             if (isConnected) {
                 LOGGER.info("Successfully connected to stock platform: " + platformName);
@@ -149,9 +155,182 @@ public class StockMarketAccount {
         return true; // Already disconnected
     }
     
+    /**
+     * Buys stocks that are Shariah compliant
+     * @param symbol Stock symbol
+     * @param quantity Number of shares to buy
+     * @return true if purchase is successful
+     */
+    public boolean buyStock(String symbol, int quantity) {
+        try {
+            if (!isShariahCompliant()) {
+                LOGGER.warning("Cannot perform transaction: Market is not Shariah compliant");
+                return false;
+            }
+            
+            // Check if the stock is Shariah compliant
+            if (!isStockShariahCompliant(symbol)) {
+                LOGGER.warning("Cannot buy stock: " + symbol + " is not Shariah compliant");
+                return false;
+            }
+            
+            JSONObject payload = new JSONObject();
+            payload.put("accountNumber", accountId);
+            payload.put("symbol", symbol);
+            payload.put("quantity", quantity);
+            payload.put("transactionType", "BUY");
+            
+            Response response = sendRequest("/stocks/buy", "POST", payload);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                double price = result.optDouble("price", 0.0);
+                double totalCost = price * quantity;
+                
+                // Update portfolio
+                portfolio.put(symbol, portfolio.getOrDefault(symbol, 0.0) + quantity);
+                totalValue += totalCost;
+                
+                // Add to transaction history
+                transactionHistory.add(new Transaction(
+                    result.optString("transactionId"),
+                    totalCost,
+                    "Buy " + quantity + " shares of " + symbol,
+                    new Date(),
+                    "STOCK_PURCHASE"
+                ));
+                
+                LOGGER.info("Successfully bought " + quantity + " shares of " + symbol);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error buying stock", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Sells stocks
+     * @param symbol Stock symbol
+     * @param quantity Number of shares to sell
+     * @return true if sale is successful
+     */
+    public boolean sellStock(String symbol, int quantity) {
+        try {
+            if (!isShariahCompliant()) {
+                LOGGER.warning("Cannot perform transaction: Market is not Shariah compliant");
+                return false;
+            }
+            
+            // Check if we have enough shares
+            if (!portfolio.containsKey(symbol) || portfolio.get(symbol) < quantity) {
+                LOGGER.warning("Insufficient shares of " + symbol + " to sell");
+                return false;
+            }
+            
+            JSONObject payload = new JSONObject();
+            payload.put("accountNumber", accountId);
+            payload.put("symbol", symbol);
+            payload.put("quantity", quantity);
+            payload.put("transactionType", "SELL");
+            
+            Response response = sendRequest("/stocks/sell", "POST", payload);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                double price = result.optDouble("price", 0.0);
+                double totalValue = price * quantity;
+                
+                // Update portfolio
+                portfolio.put(symbol, portfolio.get(symbol) - quantity);
+                if (portfolio.get(symbol) == 0) {
+                    portfolio.remove(symbol);
+                }
+                this.totalValue -= totalValue;
+                
+                // Add to transaction history
+                transactionHistory.add(new Transaction(
+                    result.optString("transactionId"),
+                    totalValue,
+                    "Sell " + quantity + " shares of " + symbol,
+                    new Date(),
+                    "STOCK_SALE"
+                ));
+                
+                LOGGER.info("Successfully sold " + quantity + " shares of " + symbol);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error selling stock", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Gets the current portfolio value
+     * @return Total portfolio value
+     */
+    public double getPortfolioValue() {
+        try {
+            Response response = sendRequest("/portfolio/value", "GET", null);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                totalValue = result.optDouble("totalValue", totalValue);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error fetching portfolio value", e);
+        }
+        return totalValue;
+    }
+    
+    /**
+     * Gets the current portfolio holdings
+     * @return Map of stock symbols to quantities
+     */
+    public Map<String, Double> getPortfolio() {
+        return new HashMap<>(portfolio);
+    }
+    
+    /**
+     * Gets the transaction history
+     * @return List of transactions
+     */
+    public List<Transaction> getTransactionHistory() {
+        return new ArrayList<>(transactionHistory);
+    }
+    
+    /**
+     * Checks if a stock is Shariah compliant
+     * @param symbol Stock symbol
+     * @return true if the stock is Shariah compliant
+     */
+    public boolean isStockShariahCompliant(String symbol) {
+        try {
+            Response response = sendRequest("/stocks/" + symbol + "/compliance", "GET", null);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                boolean compliant = result.optBoolean("shariahCompliant", false);
+                shariahCompliance.put(symbol, compliant);
+                return compliant;
+            }
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error checking stock compliance", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Gets the Shariah compliance status of all stocks in the portfolio
+     * @return Map of stock symbols to compliance status
+     */
+    public Map<String, Boolean> getPortfolioCompliance() {
+        return new HashMap<>(shariahCompliance);
+    }
+    
     // Helper methods
     
-    private String getPlatformApiUrl(String platformName) {
+    private static String getPlatformApiUrl(String platformName) {
         // In a real implementation, this could come from a configuration file or database
         switch (platformName.toLowerCase()) {
             case "robinhood":
@@ -160,17 +339,12 @@ public class StockMarketAccount {
                 return "https://api.etrade.com/v1";
             case "fidelity":
                 return "https://api.fidelity.com/v1";
-            case "td ameritrade":
-                return "https://api.tdameritrade.com/v1";
+            case "charles schwab":
+                return "https://api.schwab.com/v1";
             default:
-                return "https://api.genericbroker.com/v1";
+                // Use a generic financial data aggregator like Alpaca for unsupported platforms
+                return "https://api.alpaca.markets/v2";
         }
-    }
-    
-    private String getStoredApiKey(String platformName, String accountId) {
-        // In a real implementation, this would retrieve securely stored API keys
-        // Never hardcode actual API keys in production code
-        return "sk_" + platformName.toLowerCase().replace(" ", "") + "_" + accountId.substring(0, 4);
     }
     
     // Getters
@@ -247,6 +421,42 @@ public class StockMarketAccount {
                    ", currentPrice=" + currentPrice +
                    ", sector='" + sector + '\'' +
                    '}';
+        }
+    }
+    
+    public static class Transaction {
+        private String id;
+        private double amount;
+        private String description;
+        private Date date;
+        private String category;
+        
+        public Transaction(String id, double amount, String description, Date date, String category) {
+            this.id = id;
+            this.amount = amount;
+            this.description = description;
+            this.date = date;
+            this.category = category;
+        }
+        
+        public String getId() {
+            return id;
+        }
+        
+        public double getAmount() {
+            return amount;
+        }
+        
+        public String getDescription() {
+            return description;
+        }
+        
+        public Date getDate() {
+            return date;
+        }
+        
+        public String getCategory() {
+            return category;
         }
     }
 }

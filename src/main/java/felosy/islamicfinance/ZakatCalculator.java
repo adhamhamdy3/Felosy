@@ -6,70 +6,110 @@ package felosy.islamicfinance;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.logging.Level;
 import felosy.reporting.Report;
 
-public class ZakatCalculator {
-    private String portfolioId;
+/**
+ * Calculates Zakat for a portfolio
+ * Simplified for academic purposes
+ */
+public class ZakatCalculator extends IslamicFinanceBase {
     private float nisabThreshold;
     private float zakatRate;
+    private Map<String, Float> assetValues;
 
     public ZakatCalculator(String portfolioId) {
-        this.portfolioId = portfolioId;
+        super(portfolioId);
         this.nisabThreshold = 5000.0f; // Example threshold in currency units
         this.zakatRate = 0.025f; // Standard zakat rate of 2.5%
+        this.assetValues = new HashMap<>();
+        initializeAssetValues();
+    }
+    
+    private void initializeAssetValues() {
+        // Simplified asset values for academic purposes
+        assetValues.put("Stocks", 50000.0f);
+        assetValues.put("Gold", 15000.0f);
+        assetValues.put("Cash", 5000.0f);
+    }
+
+    @Override
+    public boolean checkCompliance() {
+        try {
+            float totalValue = calculateTotalValue();
+            isCompliant = totalValue >= nisabThreshold;
+            logComplianceCheck("Zakat threshold check", isCompliant);
+            updateLastUpdateDate();
+            return isCompliant;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error checking Zakat compliance", e);
+            return false;
+        }
     }
 
     public float calculateZakat() {
-        // Implementation for calculating zakat on portfolio
-        // This is a placeholder - real implementation would analyze portfolio assets
-        System.out.println("Calculating zakat for portfolio: " + portfolioId);
-
-        // Example calculation - assuming portfolio worth and applying zakat rate
-        float portfolioValue = 100000.0f; // This would be calculated from actual portfolio
-
-        if (portfolioValue >= nisabThreshold) {
-            return portfolioValue * zakatRate;
+        if (!checkCompliance()) {
+            LOGGER.info("Portfolio value below Nisab threshold. No Zakat due.");
+            return 0.0f;
         }
 
-        return 0.0f;
+        float totalValue = calculateTotalValue();
+        float zakatAmount = totalValue * zakatRate;
+        LOGGER.info("Zakat calculated: " + zakatAmount + " for portfolio: " + portfolioId);
+        return zakatAmount;
     }
 
     public Map<String, Float> getZakatByAsset() {
-        // Implementation for calculating zakat by asset class
         Map<String, Float> zakatByAsset = new HashMap<>();
-
-        // Example calculation - real implementation would calculate for actual assets
-        zakatByAsset.put("Stocks", 1250.0f);
-        zakatByAsset.put("Gold", 375.0f);
-        zakatByAsset.put("Cash", 125.0f);
-
+        
+        for (Map.Entry<String, Float> entry : assetValues.entrySet()) {
+            float assetValue = entry.getValue();
+            if (assetValue > 0) {
+                float assetZakat = assetValue * zakatRate;
+                zakatByAsset.put(entry.getKey(), assetZakat);
+            }
+        }
+        
         return zakatByAsset;
     }
 
     public Report generateReport() {
-        // Implementation for generating zakat report
-        System.out.println("Generating zakat report for portfolio: " + portfolioId);
-
-        // Create and return zakat report
-        return new Report(
-                "ZKT-" + portfolioId.substring(0, 8),
-                "Zakat Calculation Report",
-                new java.util.Date()
+        float totalZakat = calculateZakat();
+        Map<String, Float> zakatByAsset = getZakatByAsset();
+        
+        Report report = new Report(
+            "ZKT-" + portfolioId.substring(0, 8),
+            "Zakat Calculation Report",
+            new java.util.Date()
         );
+        
+        // Add report details
+        report.addData("Total Portfolio Value", calculateTotalValue());
+        report.addData("Nisab Threshold", nisabThreshold);
+        report.addData("Zakat Rate", zakatRate * 100 + "%");
+        report.addData("Total Zakat Due", totalZakat);
+        
+        // Add asset-wise breakdown
+        for (Map.Entry<String, Float> entry : zakatByAsset.entrySet()) {
+            report.addData(entry.getKey() + " Zakat", entry.getValue());
+        }
+        
+        return report;
+    }
+
+    private float calculateTotalValue() {
+        return assetValues.values().stream()
+            .reduce(0.0f, Float::sum);
     }
 
     // Getters and setters
-    public String getPortfolioId() {
-        return portfolioId;
-    }
-
     public float getNisabThreshold() {
         return nisabThreshold;
     }
 
     public void setNisabThreshold(float nisabThreshold) {
         this.nisabThreshold = nisabThreshold;
+        updateLastUpdateDate();
     }
 
     public float getZakatRate() {
@@ -78,5 +118,15 @@ public class ZakatCalculator {
 
     public void setZakatRate(float zakatRate) {
         this.zakatRate = zakatRate;
+        updateLastUpdateDate();
+    }
+    
+    public Map<String, Float> getAssetValues() {
+        return new HashMap<>(assetValues);
+    }
+    
+    public void setAssetValue(String assetType, float value) {
+        assetValues.put(assetType, value);
+        updateLastUpdateDate();
     }
 }

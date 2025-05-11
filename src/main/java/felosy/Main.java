@@ -6,9 +6,7 @@ import felosy.assetmanagement.*;
 import felosy.financialplanning.AssetAllocation;
 import felosy.financialplanning.FinancialGoal;
 import felosy.islamicfinance.HalalScreening;
-import felosy.reporting.Report;
-import felosy.reporting.FinancialInsight;
-import felosy.reporting.Prediction;
+import felosy.reporting.*;
 import felosy.integration.*;
 import felosy.utils.DataStorage;
 
@@ -20,11 +18,33 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+import java.io.File;
+import javax.mail.*;
+import javax.mail.internet.*;
+import java.util.Properties;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
+/**
+ * Main class for the Felosy Islamic Finance Management System
+ * Provides a command-line interface for managing Islamic finance operations
+ */
 public class Main {
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final Scanner scanner = new Scanner(System.in);
     private static final DecimalFormat currencyFormat = new DecimalFormat("$#,##0.00");
     private static final DecimalFormat percentFormat = new DecimalFormat("#0.00%");
+    
+    // Email configuration
+    private static final String CONFIG_FILE = "config.properties";
+    private static final String EMAIL_HOST = "smtp.gmail.com";
+    private static final String EMAIL_PORT = "587";
+    private static String EMAIL_USERNAME;
+    private static String EMAIL_PASSWORD;
+    
+    // Application state
     private static List<User> users;
     private static List<Portfolio> portfolios;
     private static List<Asset> assets;
@@ -35,42 +55,123 @@ public class Main {
     private static LocalDateTime lastActivity;
     private static final int SESSION_TIMEOUT_MINUTES = 30;
 
+    /**
+     * Initialize email configuration
+     */
+    private static void initializeEmailConfig() {
+        Properties config = new Properties();
+        File configFile = new File(CONFIG_FILE);
+        
+        // Set default configuration
+        config.setProperty("email.username", "adhamhn333@gmail.com");
+        config.setProperty("email.password", "nojh svgh hgcp yvty");
+        
+        try (FileOutputStream out = new FileOutputStream(CONFIG_FILE)) {
+            config.store(out, "Email Configuration");
+            LOGGER.info("Email configuration saved");
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error saving email configuration", e);
+        }
+        
+        try (FileInputStream in = new FileInputStream(CONFIG_FILE)) {
+            config.load(in);
+            EMAIL_USERNAME = config.getProperty("email.username");
+            EMAIL_PASSWORD = config.getProperty("email.password");
+            LOGGER.info("Email configuration loaded");
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error loading email configuration", e);
+        }
+    }
+
     public static void main(String[] args) {
+        initializeEmailConfig();
+        initializeSystem();
+        runApplication();
+        cleanup();
+    }
+
+    /**
+     * Initialize the system and load data
+     */
+    private static void initializeSystem() {
+        LOGGER.info("Initializing Felosy Islamic Finance Management System");
         System.out.println("Welcome to Felosy - Islamic Finance Management System");
         System.out.println("==================================================");
 
         try {
-            // Load data from files
-            users = DataStorage.loadUsers();
-            portfolios = DataStorage.loadPortfolios();
-            assets = DataStorage.loadAssets();
+            loadData();
         } catch (IOException | ClassNotFoundException e) {
+            LOGGER.log(Level.SEVERE, "Error loading data", e);
             System.out.println("Error loading data: " + e.getMessage());
-            users = new ArrayList<>();
-            portfolios = new ArrayList<>();
-            assets = new ArrayList<>();
+            initializeEmptyData();
         }
-
-        while (isRunning) {
-            if (currentUser != null && isSessionValid()) {
-                showMainMenu();
-            } else {
-                showLoginMenu();
-            }
-        }
-
-        // Save data before exiting
-        try {
-            DataStorage.saveUsers(users);
-            DataStorage.savePortfolios(portfolios);
-            DataStorage.saveAssets(assets);
-        } catch (IOException e) {
-            System.out.println("Error saving data: " + e.getMessage());
-        }
-
-        scanner.close();
     }
 
+    /**
+     * Load data from storage
+     */
+    private static void loadData() throws IOException, ClassNotFoundException {
+        users = DataStorage.loadUsers();
+        portfolios = DataStorage.loadPortfolios();
+        assets = DataStorage.loadAssets();
+        LOGGER.info("Data loaded successfully");
+    }
+
+    /**
+     * Initialize empty data structures
+     */
+    private static void initializeEmptyData() {
+        users = new ArrayList<>();
+        portfolios = new ArrayList<>();
+        assets = new ArrayList<>();
+        LOGGER.info("Initialized empty data structures");
+    }
+
+    /**
+     * Main application loop
+     */
+    private static void runApplication() {
+        while (isRunning) {
+            try {
+                if (currentUser != null && isSessionValid()) {
+                    showMainMenu();
+                } else {
+                    showLoginMenu();
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error in main application loop", e);
+                System.out.println("An error occurred: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Cleanup resources before exit
+     */
+    private static void cleanup() {
+        try {
+            saveData();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error saving data during cleanup", e);
+            System.out.println("Error saving data: " + e.getMessage());
+        }
+        scanner.close();
+        LOGGER.info("Application shutdown complete");
+    }
+
+    /**
+     * Save data to storage
+     */
+    private static void saveData() throws IOException {
+        DataStorage.saveUsers(users);
+        DataStorage.savePortfolios(portfolios);
+        DataStorage.saveAssets(assets);
+        LOGGER.info("Data saved successfully");
+    }
+
+    /**
+     * Check if the current session is valid
+     */
     private static boolean isSessionValid() {
         if (currentUser == null || lastActivity == null) {
             return false;
@@ -87,10 +188,16 @@ public class Main {
         return true;
     }
 
+    /**
+     * Update the last activity timestamp
+     */
     private static void updateLastActivity() {
         lastActivity = LocalDateTime.now();
     }
 
+    /**
+     * Display the login menu
+     */
     private static void showLoginMenu() {
         System.out.println("\n=== Login Menu ===");
         System.out.println("1. Login");
@@ -100,19 +207,18 @@ public class Main {
 
         int choice = getIntInput(1, 3);
         switch (choice) {
-            case 1:
-                handleLogin();
-                break;
-            case 2:
-                handleRegistration();
-                break;
-            case 3:
+            case 1 -> handleLogin();
+            case 2 -> handleRegistration();
+            case 3 -> {
                 isRunning = false;
                 System.out.println("Thank you for using Felosy!");
-                break;
+            }
         }
     }
 
+    /**
+     * Display the main menu
+     */
     private static void showMainMenu() {
         if (!isSessionValid()) {
             return;
@@ -126,39 +232,158 @@ public class Main {
         System.out.println("5. Reports & Insights");
         System.out.println("6. External Accounts");
         System.out.println("7. User Profile");
-        System.out.println("8. Logout");
+        System.out.println("8. System Management");
+        System.out.println("9. Logout");
         System.out.print("Enter your choice: ");
 
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
-
+        int choice = getIntInput(1, 9);
         switch (choice) {
-            case 1:
-                handlePortfolioManagement();
-                break;
-            case 2:
-                handleAssetManagement();
-                break;
-            case 3:
-                handleIslamicCompliance();
-                break;
-            case 4:
-                handleFinancialPlanning();
-                break;
-            case 5:
-                handleReportsAndInsights();
-                break;
-            case 6:
-                handleExternalAccounts();
-                break;
-            case 7:
-                handleUserProfile();
-                break;
-            case 8:
-                handleLogout();
-                break;
-            default:
-                System.out.println("Invalid choice. Please try again.");
+            case 1 -> handlePortfolioManagement();
+            case 2 -> handleAssetManagement();
+            case 3 -> handleIslamicCompliance();
+            case 4 -> handleFinancialPlanning();
+            case 5 -> handleReportsAndInsights();
+            case 6 -> handleExternalAccounts();
+            case 7 -> handleUserProfile();
+            case 8 -> handleSystemManagement();
+            case 9 -> handleLogout();
+        }
+    }
+
+    /**
+     * Handle system management operations
+     */
+    private static void handleSystemManagement() {
+        if (!isSessionValid() || currentUser == null) {
+            System.out.println("Please login to access system management.");
+            return;
+        }
+
+        System.out.println("\n=== System Management ===");
+        System.out.println("1. Create Backup");
+        System.out.println("2. Clear All Data");
+        System.out.println("3. Clear Serialized Data");
+        System.out.println("4. View System Status");
+        System.out.println("5. Back to Main Menu");
+        System.out.print("Enter your choice: ");
+
+        int choice = getIntInput(1, 5);
+        switch (choice) {
+            case 1 -> {
+                try {
+                    DataStorage.createBackup();
+                    System.out.println("Backup created successfully!");
+                } catch (IOException e) {
+                    LOGGER.log(Level.SEVERE, "Error creating backup", e);
+                    System.out.println("Error creating backup: " + e.getMessage());
+                }
+            }
+            case 2 -> {
+                System.out.println("WARNING: This will clear all data. A backup will be created first.");
+                System.out.print("Are you sure? (yes/no): ");
+                String confirmation = scanner.nextLine().toLowerCase();
+                if (confirmation.equals("yes")) {
+                    try {
+                        DataStorage.clearAllData();
+                        System.out.println("All data cleared successfully!");
+                        initializeEmptyData();
+                    } catch (IOException e) {
+                        LOGGER.log(Level.SEVERE, "Error clearing data", e);
+                        System.out.println("Error clearing data: " + e.getMessage());
+                    }
+                }
+            }
+            case 3 -> {
+                System.out.println("WARNING: This will clear all serialized data files.");
+                System.out.print("Are you sure? (yes/no): ");
+                String confirmation = scanner.nextLine().toLowerCase();
+                if (confirmation.equals("yes")) {
+                    try {
+                        // Clear specific serialized files
+                        clearSerializedData();
+                        System.out.println("Serialized data cleared successfully!");
+                    } catch (IOException e) {
+                        LOGGER.log(Level.SEVERE, "Error clearing serialized data", e);
+                        System.out.println("Error clearing serialized data: " + e.getMessage());
+                    }
+                }
+            }
+            case 4 -> {
+                System.out.println("\n=== System Status ===");
+                System.out.println("Users: " + users.size());
+                System.out.println("Portfolios: " + portfolios.size());
+                System.out.println("Assets: " + assets.size());
+                System.out.println("Current User: " + (currentUser != null ? currentUser.getUserName() : "None"));
+                System.out.println("Session Active: " + (lastActivity != null ? "Yes" : "No"));
+            }
+        }
+    }
+
+    /**
+     * Clear all serialized data files
+     */
+    private static void clearSerializedData() throws IOException {
+        // Create backup before clearing
+        DataStorage.createBackup();
+        
+        // Clear specific serialized files
+        File dataDir = new File("data");
+        if (dataDir.exists() && dataDir.isDirectory()) {
+            File[] files = dataDir.listFiles((dir, name) -> name.endsWith(".ser"));
+            if (files != null) {
+                for (File file : files) {
+                    if (file.delete()) {
+                        LOGGER.info("Deleted serialized file: " + file.getName());
+                    }
+                }
+            }
+        }
+        
+        // Reinitialize empty data structures
+        initializeEmptyData();
+    }
+
+    /**
+     * Send OTP via email
+     */
+    private static void sendOTPEmail(String recipientEmail, String otp) {
+        if (EMAIL_USERNAME == null || EMAIL_PASSWORD == null) {
+            LOGGER.severe("Email credentials not configured. Please check config.properties file.");
+            System.out.println("Email configuration error. Please contact system administrator.");
+            return;
+        }
+
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", EMAIL_HOST);
+        props.put("mail.smtp.port", EMAIL_PORT);
+        props.put("mail.smtp.ssl.trust", EMAIL_HOST);
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(EMAIL_USERNAME, EMAIL_PASSWORD);
+            }
+        });
+
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(EMAIL_USERNAME));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
+            message.setSubject("Your Felosy Login OTP");
+            message.setText("Your OTP for Felosy login is: " + otp + "\n\nThis OTP is valid for 5 minutes.");
+
+            Transport.send(message);
+            LOGGER.info("OTP email sent successfully to: " + recipientEmail);
+        } catch (AuthenticationFailedException e) {
+            LOGGER.log(Level.SEVERE, "Email authentication failed. Please check your credentials in config.properties", e);
+            System.out.println("Email authentication failed. Please check your email configuration.");
+            System.out.println("For testing purposes, your OTP is: " + otp);
+        } catch (MessagingException e) {
+            LOGGER.log(Level.SEVERE, "Error sending OTP email", e);
+            System.out.println("Error sending OTP email. Please try again.");
+            System.out.println("For testing purposes, your OTP is: " + otp);
         }
     }
 
@@ -174,28 +399,56 @@ public class Main {
                 .orElse(null);
 
         if (currentUser != null && currentUser.authenticate(password)) {
-            System.out.println("Login successful!");
-            // Initialize session
-            updateLastActivity();
-            // Load user's portfolio
-            currentPortfolio = portfolios.stream()
-                    .filter(p -> p.getUserId().equals(currentUser.getUserId()))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        Portfolio newPortfolio = new Portfolio(currentUser.getUserId());
-                        portfolios.add(newPortfolio);
-                        try {
-                            DataStorage.savePortfolios(portfolios);
-                        } catch (IOException e) {
-                            System.out.println("Error saving portfolio: " + e.getMessage());
-                        }
-                        return newPortfolio;
-                    });
+            // Generate and send OTP
+            String otp = generateOTP();
+            System.out.println("Sending OTP to your email: " + currentUser.getEmail());
+            sendOTPEmail(currentUser.getEmail(), otp);
+            
+            System.out.print("Enter OTP: ");
+            String enteredOTP = scanner.nextLine();
+
+            if (validateOTP(enteredOTP, otp)) {
+                System.out.println("Login successful!");
+                updateLastActivity();
+                currentPortfolio = portfolios.stream()
+                        .filter(p -> p.getUserId().equals(currentUser.getUserId()))
+                        .findFirst()
+                        .orElseGet(() -> {
+                            Portfolio newPortfolio = new Portfolio(currentUser.getUserId());
+                            portfolios.add(newPortfolio);
+                            try {
+                                DataStorage.savePortfolios(portfolios);
+                            } catch (IOException e) {
+                                LOGGER.log(Level.SEVERE, "Error saving portfolio", e);
+                            }
+                            return newPortfolio;
+                        });
+            } else {
+                System.out.println("Invalid OTP. Login failed.");
+                currentUser = null;
+                currentPortfolio = null;
+            }
         } else {
             System.out.println("Invalid username or password.");
             currentUser = null;
             currentPortfolio = null;
         }
+    }
+
+    /**
+     * Generate a 6-digit OTP
+     */
+    private static String generateOTP() {
+        Random random = new Random();
+        int otp = 100000 + random.nextInt(900000);
+        return String.valueOf(otp);
+    }
+
+    /**
+     * Validate the entered OTP
+     */
+    private static boolean validateOTP(String enteredOTP, String generatedOTP) {
+        return enteredOTP.equals(generatedOTP);
     }
 
     private static void handleRegistration() {
@@ -1033,15 +1286,47 @@ public class Main {
         System.out.print("Enter goal name: ");
         String goalName = scanner.nextLine();
         System.out.print("Enter target amount: ");
-        float targetAmount = getFloatInput();
+        double targetAmount = getFloatInput();
 
         FinancialGoal goal = new FinancialGoal(goalName, targetAmount);
-        if (goal.addGoal()) {
-            System.out.println("Financial goal set successfully!");
-            float progress = goal.trackProgress();
-            System.out.printf("Current Progress: %.2f%%\n", progress);
-        } else {
-            System.out.println("Failed to set financial goal.");
+        System.out.println("Financial goal set successfully!");
+        System.out.printf("Current Progress: %.2f%%\n", goal.getProgressPercentage());
+        
+        // Ask for additional goal details
+        System.out.print("Enter target date (YYYY-MM-DD) or press Enter to skip: ");
+        String dateStr = scanner.nextLine();
+        if (!dateStr.isEmpty()) {
+            try {
+                LocalDateTime targetDate = LocalDateTime.parse(dateStr + "T00:00:00");
+                goal.updateTargetDate(targetDate);
+            } catch (Exception e) {
+                System.out.println("Invalid date format. Skipping target date.");
+            }
+        }
+        
+        System.out.println("Select priority level:");
+        System.out.println("1. Low");
+        System.out.println("2. Medium");
+        System.out.println("3. High");
+        System.out.println("4. Urgent");
+        int priorityChoice = getIntInput(1, 4);
+        
+        switch (priorityChoice) {
+            case 1 -> goal.updatePriority(FinancialGoal.GoalPriority.LOW);
+            case 2 -> goal.updatePriority(FinancialGoal.GoalPriority.MEDIUM);
+            case 3 -> goal.updatePriority(FinancialGoal.GoalPriority.HIGH);
+            case 4 -> goal.updatePriority(FinancialGoal.GoalPriority.URGENT);
+        }
+        
+        System.out.println("\nGoal Details:");
+        System.out.println("Name: " + goal.getGoalType());
+        System.out.println("Target Amount: " + currencyFormat.format(goal.getTargetAmount()));
+        System.out.println("Current Progress: " + percentFormat.format(goal.getProgressPercentage() / 100));
+        System.out.println("Remaining Amount: " + currencyFormat.format(goal.getRemainingAmount()));
+        System.out.println("Priority: " + goal.getPriority());
+        System.out.println("Status: " + goal.getStatus());
+        if (goal.getTargetDate() != null) {
+            System.out.println("Target Date: " + goal.getTargetDate().toLocalDate());
         }
     }
 
@@ -1128,7 +1413,7 @@ public class Main {
         );
 
         System.out.printf("Generated prediction for %d days from now\n", days);
-        System.out.println("Prediction ID: " + prediction.getPredictionId());
+        System.out.println("Prediction ID: " + prediction.getReportId());
     }
 
     private static void connectBankAccount() {

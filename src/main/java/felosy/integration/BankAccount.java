@@ -3,26 +3,44 @@ package felosy.integration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import org.json.JSONObject;
 
 /**
  * Represents a connection to a bank account for fetching transactions and balances
+ * Simplified for academic purposes
  */
-public class BankAccount {
-    private String accountId;
-    private String bankName;
-    private float balance;
-    private String accessToken;
-    private ExternalAccountConnector connector;
+public class BankAccount extends IslamicFinanceConnector {
     private static final Logger LOGGER = Logger.getLogger(BankAccount.class.getName());
+    
+    private String accountNumber;
+    private String accountType; // SAVINGS, CURRENT, INVESTMENT
+    private double balance;
+    private Map<String, Double> profitRates;
+    private boolean isMudarabahAccount;
+    private List<Transaction> transactions;
 
-    public BankAccount(String accountId, String bankName) {
-        this.accountId = accountId;
-        this.bankName = bankName;
-        this.balance = 0.0f;
+    public BankAccount(String accountNumber, String accountType) {
+        super("bank-" + accountType.toLowerCase(), 
+              "demo_key", 
+              "http://demo.api.bank.com/v1", 
+              "ISLAMIC_BANK");
+        this.accountNumber = accountNumber;
+        this.accountType = accountType;
+        this.balance = 0.0;
+        this.profitRates = new HashMap<>();
+        this.isMudarabahAccount = false;
+        this.transactions = new ArrayList<>();
+        initializeProfitRates();
+    }
+    
+    private void initializeProfitRates() {
+        // Simplified profit rates for academic purposes
+        profitRates.put("SAVINGS", 0.05); // 5% profit sharing rate
+        profitRates.put("INVESTMENT", 0.08); // 8% profit sharing rate
     }
     
     /**
@@ -31,168 +49,148 @@ public class BankAccount {
      */
     public boolean connect() {
         try {
-            // Create appropriate connector based on bank name
-            String baseUrl = getBankApiUrl(bankName);
-            String apiKey = getStoredApiKey(bankName, accountId);
-            
-            if (apiKey == null || baseUrl == null) {
-                LOGGER.severe("Missing API key or base URL for " + bankName);
-                return false;
-            }
-            
-            connector = new ExternalAccountConnector("bank-" + bankName.toLowerCase(), apiKey, baseUrl);
-            boolean connected = connector.establishConnection();
-            
+            boolean connected = super.establishConnection();
             if (connected) {
-                // Fetch initial balance upon successful connection
-                this.balance = getBalance();
-                LOGGER.info("Successfully connected to bank account: " + accountId + " at " + bankName);
+                LOGGER.info("Successfully connected to bank: " + accountType);
             }
-            
             return connected;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to bank account", e);
+            LOGGER.log(Level.SEVERE, "Failed to connect to bank", e);
             return false;
         }
     }
     
     /**
-     * Fetches transactions from the bank account
-     * @return List of transactions
+     * Deposits money into the account
      */
-    public List<Transaction> fetchTransactions() {
-        List<Transaction> transactions = new ArrayList<>();
-        
-        if (connector == null || !connector.isConnected()) {
-            LOGGER.warning("Connector not initialized or connected");
-            return transactions;
-        }
-        
+    public boolean deposit(double amount) {
         try {
-            JSONObject payload = new JSONObject();
-            payload.put("accountId", accountId);
-            payload.put("startDate", getLastMonth());
-            payload.put("endDate", getCurrentDate());
-            
-            Response response = connector.sendRequest("/transactions", "POST", payload);
-            
-            if (response.isSuccessful()) {
-                JSONObject responseJson = new JSONObject(response.getBody());
-                JSONArray txArray = responseJson.getJSONArray("transactions");
-                
-                for (int i = 0; i < txArray.length(); i++) {
-                    JSONObject tx = txArray.getJSONObject(i);
-                    Transaction transaction = new Transaction(
-                        tx.getString("id"),
-                        tx.getFloat("amount"),
-                        tx.getString("description"),
-                        new Date(tx.getLong("timestamp")),
-                        tx.getString("category")
-                    );
-                    transactions.add(transaction);
-                }
-                
-                LOGGER.info("Successfully fetched " + transactions.size() + " transactions");
-            } else {
-                LOGGER.warning("Failed to fetch transactions: " + response.getStatusCode());
+            if (!isShariahCompliant()) {
+                LOGGER.warning("Cannot perform transaction: Bank is not Shariah compliant");
+                return false;
             }
+            
+            balance += amount;
+            transactions.add(new Transaction(
+                "TX" + System.currentTimeMillis(),
+                amount,
+                "Deposit",
+                new Date(),
+                "DEPOSIT"
+            ));
+            
+            LOGGER.info("Deposit successful. New balance: " + balance);
+            return true;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error fetching transactions", e);
+            LOGGER.log(Level.SEVERE, "Error processing deposit", e);
+            return false;
         }
-        
-        return transactions;
     }
     
     /**
-     * Gets the current balance of the bank account
-     * @return the account balance
+     * Withdraws money from the account
      */
-    public float getBalance() {
-        if (connector == null || !connector.isConnected()) {
-            LOGGER.warning("Cannot get balance: Connector not initialized or connected");
-            return this.balance; // Return last known balance
-        }
-        
+    public boolean withdraw(double amount) {
         try {
-            JSONObject payload = new JSONObject();
-            payload.put("accountId", accountId);
-            
-            Response response = connector.sendRequest("/balance", "POST", payload);
-            
-            if (response.isSuccessful()) {
-                JSONObject responseJson = new JSONObject(response.getBody());
-                this.balance = responseJson.getFloat("balance");
-                LOGGER.info("Successfully fetched balance: " + this.balance);
-            } else {
-                LOGGER.warning("Failed to fetch balance: " + response.getStatusCode());
+            if (!isShariahCompliant()) {
+                LOGGER.warning("Cannot perform transaction: Bank is not Shariah compliant");
+                return false;
             }
+            
+            if (amount > balance) {
+                LOGGER.warning("Insufficient funds for withdrawal");
+                return false;
+            }
+            
+            balance -= amount;
+            transactions.add(new Transaction(
+                "TX" + System.currentTimeMillis(),
+                -amount,
+                "Withdrawal",
+                new Date(),
+                "WITHDRAWAL"
+            ));
+            
+            LOGGER.info("Withdrawal successful. New balance: " + balance);
+            return true;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error fetching balance", e);
+            LOGGER.log(Level.SEVERE, "Error processing withdrawal", e);
+            return false;
         }
-        
-        return this.balance;
     }
     
     /**
-     * Disconnects from the bank's API
-     * @return true if disconnection was successful
+     * Transfers money to another account
      */
-    public boolean disconnect() {
-        if (connector != null && connector.isConnected()) {
-            boolean result = connector.closeConnection();
-            if (result) {
-                LOGGER.info("Successfully disconnected from bank account: " + accountId);
-            } else {
-                LOGGER.warning("Problem while disconnecting from bank account: " + accountId);
+    public boolean transfer(String targetAccount, double amount) {
+        try {
+            if (!isShariahCompliant()) {
+                LOGGER.warning("Cannot perform transaction: Bank is not Shariah compliant");
+                return false;
             }
-            return result;
+            
+            if (amount > balance) {
+                LOGGER.warning("Insufficient funds for transfer");
+                return false;
+            }
+            
+            balance -= amount;
+            transactions.add(new Transaction(
+                "TX" + System.currentTimeMillis(),
+                -amount,
+                "Transfer to " + targetAccount,
+                new Date(),
+                "TRANSFER"
+            ));
+            
+            LOGGER.info("Transfer successful. New balance: " + balance);
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing transfer", e);
+            return false;
         }
-        return true; // Already disconnected
     }
     
-    // Helper methods
-    
-    private String getBankApiUrl(String bankName) {
-        // In a real implementation, this could come from a configuration file or database
-        switch (bankName.toLowerCase()) {
-            case "chase":
-                return "https://api.chase.com/v1";
-            case "bank of america":
-                return "https://api.bankofamerica.com/v1";
-            case "wells fargo":
-                return "https://api.wellsfargo.com/v1";
-            case "citi":
-                return "https://api.citi.com/v1";
-            default:
-                // Use a generic financial data aggregator like Plaid for unsupported banks
-                return "https://api.financialaggregator.com/v1";
-        }
+    /**
+     * Gets the current balance
+     */
+    public double getBalance() {
+        return balance;
     }
     
-    private String getStoredApiKey(String bankName, String accountId) {
-        // In a real implementation, this would retrieve securely stored API keys
-        // This is just a placeholder - never hardcode actual API keys
-        return "sk_" + bankName.toLowerCase().replace(" ", "") + "_" + accountId.substring(0, 4);
+    /**
+     * Gets the profit sharing rate for the account
+     */
+    public double getProfitRate() {
+        return profitRates.getOrDefault(accountType, 0.0);
     }
     
-    private String getCurrentDate() {
-        return new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date());
+    /**
+     * Gets the transaction history
+     */
+    public List<Transaction> getTransactions() {
+        return new ArrayList<>(transactions);
     }
     
-    private String getLastMonth() {
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.add(java.util.Calendar.MONTH, -1);
-        return new java.text.SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+    /**
+     * Checks if the account is a Mudarabah account
+     */
+    public boolean isMudarabahAccount() {
+        return isMudarabahAccount;
     }
     
-    // Getters and Setters
-    
-    public String getAccountId() {
-        return accountId;
+    /**
+     * Gets the account number
+     */
+    public String getAccountNumber() {
+        return accountNumber;
     }
     
-    public String getBankName() {
-        return bankName;
+    /**
+     * Gets the account type
+     */
+    public String getAccountType() {
+        return accountType;
     }
     
     /**
@@ -200,12 +198,12 @@ public class BankAccount {
      */
     public static class Transaction {
         private String id;
-        private float amount;
+        private double amount;
         private String description;
         private Date date;
         private String category;
         
-        public Transaction(String id, float amount, String description, Date date, String category) {
+        public Transaction(String id, double amount, String description, Date date, String category) {
             this.id = id;
             this.amount = amount;
             this.description = description;
@@ -217,7 +215,7 @@ public class BankAccount {
             return id;
         }
         
-        public float getAmount() {
+        public double getAmount() {
             return amount;
         }
         

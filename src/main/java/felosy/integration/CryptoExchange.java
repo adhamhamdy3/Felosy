@@ -6,21 +6,38 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Date;
 
 /**
  * Represents a connection to a cryptocurrency exchange
  */
-public class CryptoExchange {
+public class CryptoExchange extends IslamicFinanceConnector {
     private String exchangeId;
     private String exchangeName;
     private ExternalAccountConnector connector;
     private boolean isConnected;
     private static final Logger LOGGER = Logger.getLogger(CryptoExchange.class.getName());
+    
+    private String accountNumber;
+    private Map<String, Double> balances;
+    private Map<String, Boolean> shariahCompliance;
+    private List<Transaction> transactionHistory;
+    private double totalValue;
 
     public CryptoExchange(String exchangeId, String exchangeName) {
+        super("crypto-" + exchangeName.toLowerCase(), 
+              "sk_" + exchangeName.toLowerCase().replace(" ", ""), 
+              getExchangeApiUrl(exchangeName), 
+              "ISLAMIC_CRYPTO_EXCHANGE");
         this.exchangeId = exchangeId;
         this.exchangeName = exchangeName;
         this.isConnected = false;
+        this.balances = new HashMap<>();
+        this.shariahCompliance = new HashMap<>();
+        this.transactionHistory = new ArrayList<>();
+        this.totalValue = 0.0;
     }
     
     /**
@@ -156,21 +173,203 @@ public class CryptoExchange {
         return true; // Already disconnected
     }
     
+    /**
+     * Buys cryptocurrency that is Shariah compliant
+     * @param symbol Cryptocurrency symbol
+     * @param amount Amount to buy
+     * @return true if purchase is successful
+     */
+    public boolean buyCrypto(String symbol, double amount) {
+        try {
+            if (!isShariahCompliant()) {
+                LOGGER.warning("Cannot perform transaction: Exchange is not Shariah compliant");
+                return false;
+            }
+            
+            // Check if the cryptocurrency is Shariah compliant
+            if (!isCryptoShariahCompliant(symbol)) {
+                LOGGER.warning("Cannot buy cryptocurrency: " + symbol + " is not Shariah compliant");
+                return false;
+            }
+            
+            JSONObject payload = new JSONObject();
+            payload.put("accountNumber", accountNumber);
+            payload.put("symbol", symbol);
+            payload.put("amount", amount);
+            payload.put("transactionType", "BUY");
+            
+            Response response = sendRequest("/crypto/buy", "POST", payload);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                double price = result.optDouble("price", 0.0);
+                double totalCost = price * amount;
+                
+                // Update balances
+                balances.put(symbol, balances.getOrDefault(symbol, 0.0) + amount);
+                totalValue += totalCost;
+                
+                // Add to transaction history
+                transactionHistory.add(new Transaction(
+                    result.optString("transactionId"),
+                    totalCost,
+                    "Buy " + amount + " " + symbol,
+                    new Date(),
+                    "CRYPTO_PURCHASE"
+                ));
+                
+                LOGGER.info("Successfully bought " + amount + " " + symbol);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error buying cryptocurrency", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Sells cryptocurrency
+     * @param symbol Cryptocurrency symbol
+     * @param amount Amount to sell
+     * @return true if sale is successful
+     */
+    public boolean sellCrypto(String symbol, double amount) {
+        try {
+            if (!isShariahCompliant()) {
+                LOGGER.warning("Cannot perform transaction: Exchange is not Shariah compliant");
+                return false;
+            }
+            
+            // Check if we have enough balance
+            if (!balances.containsKey(symbol) || balances.get(symbol) < amount) {
+                LOGGER.warning("Insufficient balance of " + symbol + " to sell");
+                return false;
+            }
+            
+            JSONObject payload = new JSONObject();
+            payload.put("accountNumber", accountNumber);
+            payload.put("symbol", symbol);
+            payload.put("amount", amount);
+            payload.put("transactionType", "SELL");
+            
+            Response response = sendRequest("/crypto/sell", "POST", payload);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                double price = result.optDouble("price", 0.0);
+                double totalValue = price * amount;
+                
+                // Update balances
+                balances.put(symbol, balances.get(symbol) - amount);
+                if (balances.get(symbol) == 0) {
+                    balances.remove(symbol);
+                }
+                this.totalValue -= totalValue;
+                
+                // Add to transaction history
+                transactionHistory.add(new Transaction(
+                    result.optString("transactionId"),
+                    totalValue,
+                    "Sell " + amount + " " + symbol,
+                    new Date(),
+                    "CRYPTO_SALE"
+                ));
+                
+                LOGGER.info("Successfully sold " + amount + " " + symbol);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error selling cryptocurrency", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Gets the current portfolio value
+     * @return Total portfolio value
+     */
+    public double getPortfolioValue() {
+        try {
+            Response response = sendRequest("/portfolio/value", "GET", null);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                totalValue = result.optDouble("totalValue", totalValue);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error fetching portfolio value", e);
+        }
+        return totalValue;
+    }
+    
+    /**
+     * Gets the current balances
+     * @return Map of cryptocurrency symbols to balances
+     */
+    public Map<String, Double> getBalances() {
+        return new HashMap<>(balances);
+    }
+    
+    /**
+     * Gets the transaction history
+     * @return List of transactions
+     */
+    public List<Transaction> getTransactionHistory() {
+        return new ArrayList<>(transactionHistory);
+    }
+    
+    /**
+     * Checks if a cryptocurrency is Shariah compliant
+     * @param symbol Cryptocurrency symbol
+     * @return true if the cryptocurrency is Shariah compliant
+     */
+    public boolean isCryptoShariahCompliant(String symbol) {
+        try {
+            Response response = sendRequest("/crypto/" + symbol + "/compliance", "GET", null);
+            if (response.isSuccessful()) {
+                JSONObject result = new JSONObject(response.getBody());
+                boolean compliant = result.optBoolean("shariahCompliant", false);
+                shariahCompliance.put(symbol, compliant);
+                return compliant;
+            }
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error checking cryptocurrency compliance", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Gets the Shariah compliance status of all cryptocurrencies in the portfolio
+     * @return Map of cryptocurrency symbols to compliance status
+     */
+    public Map<String, Boolean> getPortfolioCompliance() {
+        return new HashMap<>(shariahCompliance);
+    }
+    
+    /**
+     * Gets the account number
+     * @return Account number
+     */
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+    
     // Helper methods
     
-    private String getExchangeApiUrl(String exchangeName) {
+    private static String getExchangeApiUrl(String exchangeName) {
         // In a real implementation, this could come from a configuration file or database
         switch (exchangeName.toLowerCase()) {
             case "binance":
-                return "https://api.binance.com";
+                return "https://api.binance.com/v1";
             case "coinbase":
-                return "https://api.coinbase.com";
+                return "https://api.coinbase.com/v2";
             case "kraken":
-                return "https://api.kraken.com";
+                return "https://api.kraken.com/0";
             case "gemini":
-                return "https://api.gemini.com";
+                return "https://api.gemini.com/v1";
             default:
-                return "https://api.genericexchange.com";
+                // Use a generic cryptocurrency data aggregator like CoinGecko for unsupported exchanges
+                return "https://api.coingecko.com/api/v3";
         }
     }
     
@@ -304,6 +503,42 @@ public class CryptoExchange {
                    ", currentPrice=" + currentPrice +
                    ", totalValue=" + getTotalValue() +
                    '}';
+        }
+    }
+    
+    public static class Transaction {
+        private String id;
+        private double amount;
+        private String description;
+        private Date date;
+        private String category;
+        
+        public Transaction(String id, double amount, String description, Date date, String category) {
+            this.id = id;
+            this.amount = amount;
+            this.description = description;
+            this.date = date;
+            this.category = category;
+        }
+        
+        public String getId() {
+            return id;
+        }
+        
+        public double getAmount() {
+            return amount;
+        }
+        
+        public String getDescription() {
+            return description;
+        }
+        
+        public Date getDate() {
+            return date;
+        }
+        
+        public String getCategory() {
+            return category;
         }
     }
 }
