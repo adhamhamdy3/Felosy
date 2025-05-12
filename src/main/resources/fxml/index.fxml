@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.text.Font?>
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="felosy.controllers.IndexController"
+            prefHeight="400.0" prefWidth="600.0" >
+    <Label id="form_label" alignment="CENTER" layoutX="122.0" layoutY="63.0" prefHeight="85.0" prefWidth="357.0" text="Welcome to Felosy!">
+        <font>
+            <Font size="36.0" />
+        </font>
+    </Label>
+    <Button id="login_btn" fx:id="login_btn" alignment="CENTER" layoutX="252.0" layoutY="174.0" mnemonicParsing="false" onAction="#switchToLogin" prefHeight="25.0" prefWidth="97.0" text="Login" />
+    <Button id="signup_btn" fx:id="signup_btn" alignment="CENTER" layoutX="252.0" layoutY="229.0" mnemonicParsing="false" onAction="#switchToSignUp" prefHeight="25.0" prefWidth="97.0" text="Sign up" />
+    <Button id="about_btn" fx:id="about_btn" alignment="CENTER" layoutX="252.0" layoutY="284.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="97.0" text="About" />
+</AnchorPane>

@@ -27,7 +27,9 @@ module felosy {
     exports felosy.storage;
     exports felosy.utils;
     exports felosy.integration;
-    
+    exports felosy.controllers;
+    opens felosy.controllers to javafx.fxml;
+
     // You might need to open these packages to FXML as well if they contain controllers
     // Uncomment as needed:
     // opens felosy.assetmanagement to javafx.fxml;
