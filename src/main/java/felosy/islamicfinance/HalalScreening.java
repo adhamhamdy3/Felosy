@@ -1,37 +1,59 @@
 package felosy.islamicfinance;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.math.BigDecimal;
 import felosy.assetmanagement.SimpleAsset;
 import felosy.reporting.Report;
+import felosy.authentication.User;
+import felosy.islamicfinance.model.ComplianceRule;
+import felosy.islamicfinance.config.IslamicFinanceConfig;
 
 /**
  * Screens assets for Islamic compliance
  * Simplified for academic purposes
  */
 public class HalalScreening extends IslamicFinanceBase {
-    private List<Rule> complianceRules;
-    private Map<String, Boolean> screeningResults;
-    private Map<String, SimpleAsset> portfolioAssets;
+    private final List<ComplianceRule> complianceRules;
+    private final Map<String, Boolean> screeningResults;
+    private final Map<String, SimpleAsset> portfolioAssets;
+    private final IslamicFinanceConfig config;
 
     public HalalScreening(String portfolioId) {
         super(portfolioId);
+        this.config = IslamicFinanceConfig.getInstance();
         this.complianceRules = initializeRules();
         this.screeningResults = new HashMap<>();
         this.portfolioAssets = new HashMap<>();
         initializePortfolioAssets();
     }
 
-    private List<Rule> initializeRules() {
-        List<Rule> rules = new ArrayList<>();
-        rules.add(new Rule("No Interest", "Asset must not be based on interest (riba)"));
-        rules.add(new Rule("Ethical Business", "Company must not be involved in non-halal activities"));
-        rules.add(new Rule("Debt Ratio", "Company's debt ratio must not exceed 33%"));
-        rules.add(new Rule("Non-Halal Income", "Non-compliant income must not exceed 5% of total revenue"));
+    private List<ComplianceRule> initializeRules() {
+        List<ComplianceRule> rules = new ArrayList<>();
+        rules.add(new ComplianceRule(
+            "No Interest",
+            "Asset must not be based on interest (riba)",
+            ComplianceRule.RuleType.INTEREST_BASED,
+            0.0
+        ));
+        rules.add(new ComplianceRule(
+            "Ethical Business",
+            "Company must not be involved in non-halal activities",
+            ComplianceRule.RuleType.ETHICAL_BUSINESS,
+            0.0
+        ));
+        rules.add(new ComplianceRule(
+            "Debt Ratio",
+            "Company's debt ratio must not exceed threshold",
+            ComplianceRule.RuleType.DEBT_RATIO,
+            config.getDebtRatioThreshold()
+        ));
+        rules.add(new ComplianceRule(
+            "Non-Halal Income",
+            "Non-compliant income must not exceed threshold",
+            ComplianceRule.RuleType.NON_HALAL_INCOME,
+            config.getNonHalalIncomeThreshold()
+        ));
         return rules;
     }
     
@@ -74,39 +96,63 @@ public class HalalScreening extends IslamicFinanceBase {
     }
 
     private boolean checkAssetCompliance(String assetId) {
-        // Simplified compliance check for academic purposes
-        switch (assetId) {
-            case "Stock-AAPL":
-                return false; // Example non-compliant
-            case "Stock-ADNOC":
-            case "RealEstate-Dubai1":
-            case "Gold-Investment1":
-                return true; // Example compliant
-            default:
-                return false;
+        SimpleAsset asset = portfolioAssets.get(assetId);
+        if (asset == null) {
+            LOGGER.warning("Asset not found: " + assetId);
+            return false;
         }
+
+        for (ComplianceRule rule : complianceRules) {
+            if (!rule.isActive()) continue;
+
+            boolean ruleCompliant = switch (rule.getType()) {
+                case INTEREST_BASED -> checkInterestBasedCompliance(asset);
+                case ETHICAL_BUSINESS -> checkEthicalBusinessCompliance(asset);
+                case DEBT_RATIO -> checkDebtRatioCompliance(asset, rule.getThreshold());
+                case NON_HALAL_INCOME -> checkNonHalalIncomeCompliance(asset, rule.getThreshold());
+                case CUSTOM -> true; // Custom rules would be implemented separately
+            };
+
+            if (!ruleCompliant) {
+                LOGGER.info(String.format("Asset %s failed compliance rule: %s", assetId, rule.getName()));
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkInterestBasedCompliance(SimpleAsset asset) {
+        // Simplified check - in reality, this would involve detailed analysis
+        return !asset.getSymbol().equals("AAPL"); // Example: Apple is non-compliant
+    }
+
+    private boolean checkEthicalBusinessCompliance(SimpleAsset asset) {
+        // Simplified check - in reality, this would involve detailed analysis
+        return true; // All assets are considered ethical in this example
+    }
+
+    private boolean checkDebtRatioCompliance(SimpleAsset asset, double threshold) {
+        // Simplified check - in reality, this would involve detailed analysis
+        return true; // All assets are considered compliant in this example
+    }
+
+    private boolean checkNonHalalIncomeCompliance(SimpleAsset asset, double threshold) {
+        // Simplified check - in reality, this would involve detailed analysis
+        return true; // All assets are considered compliant in this example
     }
 
     public List<SimpleAsset> filterNonCompliant() {
-        List<SimpleAsset> nonCompliantAssets = new ArrayList<>();
-        
-        for (Map.Entry<String, Boolean> entry : screeningResults.entrySet()) {
-            if (!entry.getValue()) {
-                SimpleAsset asset = portfolioAssets.get(entry.getKey());
-                if (asset != null) {
-                    nonCompliantAssets.add(asset);
-                }
-            }
-        }
-        
-        return nonCompliantAssets;
+        return portfolioAssets.values().stream()
+            .filter(asset -> !screeningResults.getOrDefault(asset.getAssetId(), false))
+            .toList();
     }
 
-    public Report generateComplianceReport() {
+    public Report generateComplianceReport(User user) {
         Report report = new Report(
             "HLR-" + portfolioId.substring(0, 8),
             "Halal Compliance Report",
-            new java.util.Date()
+            new Date(),
+            user
         );
         
         // Add compliance summary
@@ -123,7 +169,7 @@ public class HalalScreening extends IslamicFinanceBase {
     }
 
     // Getters
-    public List<Rule> getComplianceRules() {
+    public List<ComplianceRule> getComplianceRules() {
         return new ArrayList<>(complianceRules);
     }
 
@@ -133,24 +179,5 @@ public class HalalScreening extends IslamicFinanceBase {
     
     public Map<String, SimpleAsset> getPortfolioAssets() {
         return new HashMap<>(portfolioAssets);
-    }
-
-    // Inner class for compliance rules
-    public static class Rule {
-        private String name;
-        private String description;
-
-        public Rule(String name, String description) {
-            this.name = name;
-            this.description = description;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
     }
 }

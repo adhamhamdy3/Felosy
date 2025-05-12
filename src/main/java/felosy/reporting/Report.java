@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.logging.Level;
+import felosy.authentication.User;
 
 /**
  * Report class for generating various types of financial reports
@@ -16,6 +17,7 @@ import java.util.logging.Level;
 public class Report extends BaseReport {
     private String recipientEmail;
     private boolean isGenerated;
+    private User user;
     
     /**
      * Constructor for creating a new report
@@ -23,16 +25,31 @@ public class Report extends BaseReport {
      * @param reportId Unique identifier for the report
      * @param reportType Type of report (e.g., "Zakat", "Compliance", "Portfolio Performance")
      * @param generationDate Date when the report was generated
+     * @param user User associated with the report
      */
-    public Report(String reportId, String reportType, Date generationDate) {
+    public Report(String reportId, String reportType, Date generationDate, User user) {
         super(reportId, reportType);
         this.generationDate = generationDate;
         this.isGenerated = false;
+        this.user = user;
     }
     
     @Override
     public String generateContent() {
         StringBuilder content = new StringBuilder();
+        if (user != null) {
+            content.append("=== User Information ===\n");
+            content.append("User ID: ").append(user.getUserId()).append("\n");
+            content.append("Name: ").append(user.getUserName()).append("\n");
+            content.append("Email: ").append(user.getEmail()).append("\n");
+            content.append("Age: ").append(user.getAge()).append("\n");
+            content.append("Gender: ").append(user.getGender()).append("\n");
+            content.append("Postal Code: ").append(user.getPostalCode()).append("\n");
+            content.append("Education Level: ").append(user.getEducationLevel()).append("\n");
+            content.append("Income: $").append(String.format("%,.2f", user.getIncome())).append("\n");
+            content.append("Tech Usage Pattern: ").append(String.format("%.2f", user.getTechUsagePattern())).append("\n");
+            content.append("User Category: ").append(user.getUserCategory()).append("\n\n");
+        }
         content.append("=== ").append(reportType).append(" ===\n");
         content.append("Report ID: ").append(reportId).append("\n");
         content.append("Generated: ").append(generationDate).append("\n\n");
@@ -123,6 +140,34 @@ public class Report extends BaseReport {
     public boolean fileExists(String extension) {
         java.io.File file = new java.io.File(getFileName(extension));
         return file.exists();
+    }
+    
+    /**
+     * Export the report as PDF
+     */
+    public boolean exportAsPDF() {
+        if (!isGenerated) {
+            System.err.println("Cannot export: Report has not been generated yet");
+            return false;
+        }
+        // Stub for PDF export logic
+        System.out.println("Exporting report as PDF: " + getFileName("pdf"));
+        // TODO: Implement actual PDF export logic
+        return true;
+    }
+
+    /**
+     * Export the report as Excel
+     */
+    public boolean exportAsExcel() {
+        if (!isGenerated) {
+            System.err.println("Cannot export: Report has not been generated yet");
+            return false;
+        }
+        // Stub for Excel export logic
+        System.out.println("Exporting report as Excel: " + getFileName("xlsx"));
+        // TODO: Implement actual Excel export logic
+        return true;
     }
     
     // Getters and Setters

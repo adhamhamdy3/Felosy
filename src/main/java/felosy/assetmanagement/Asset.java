@@ -10,6 +10,7 @@ public abstract class Asset {
     private Date purchaseDate;
     private BigDecimal purchasePrice;
     private BigDecimal currentValue;
+    private Date actionDate; // Date when asset was added
 
     public Asset(String assetId, String name, Date purchaseDate, BigDecimal purchasePrice, BigDecimal currentValue) {
         this.assetId = assetId;
@@ -17,6 +18,17 @@ public abstract class Asset {
         setPurchaseDate(purchaseDate);
         setPurchasePrice(purchasePrice);
         setCurrentValue(currentValue);
+        this.actionDate = new Date(); // Default to now when constructed
+    }
+
+    // New constructor to allow setting actionDate explicitly
+    public Asset(String assetId, String name, Date purchaseDate, BigDecimal purchasePrice, BigDecimal currentValue, Date actionDate) {
+        this.assetId = assetId;
+        this.name = name;
+        setPurchaseDate(purchaseDate);
+        setPurchasePrice(purchasePrice);
+        setCurrentValue(currentValue);
+        this.actionDate = actionDate != null ? actionDate : new Date();
     }
 
     /*
@@ -62,6 +74,10 @@ public abstract class Asset {
         return currentValue;
     }
     
+    public Date getActionDate() {
+        return actionDate;
+    }
+    
     public void setName(String name) {
         this.name = name;
     }
@@ -87,6 +103,10 @@ public abstract class Asset {
         this.currentValue = currentValue;
     }
     
+    public void setActionDate(Date actionDate) {
+        this.actionDate = actionDate;
+    }
+    
     public BigDecimal calculateReturn() {
         return currentValue.subtract(purchasePrice).divide(purchasePrice, 4, RoundingMode.HALF_UP);
     }
@@ -100,6 +120,7 @@ public abstract class Asset {
            ", purchaseDate=" + purchaseDate +
            ", purchasePrice=" + purchasePrice +
            ", currentValue=" + currentValue +
+           ", actionDate=" + actionDate +
            ", return=" + calculateReturn() +
            '}';
     }

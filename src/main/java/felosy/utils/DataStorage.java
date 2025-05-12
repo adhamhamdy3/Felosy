@@ -9,8 +9,8 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 /**
- * Utility class for managing data persistence in the Felosy system
- * Handles serialization of users, portfolios, assets, and reports
+ * Utility class for managing data persistence in the Felosy system.
+ * Handles serialization of users, portfolios, assets, and reports.
  */
 public class DataStorage {
     private static final Logger LOGGER = Logger.getLogger(DataStorage.class.getName());
@@ -33,19 +33,20 @@ public class DataStorage {
         createDirectoryIfNotExists(BACKUP_DIR);
     }
 
+    // --- Directory Utilities ---
+
+    /**
+     * Ensures a directory exists, creating it if necessary.
+     */
     private static void createDirectoryIfNotExists(String dirPath) {
         File dir = new File(dirPath);
-        if (!dir.exists()) {
-            if (dir.mkdirs()) {
-                LOGGER.info("Created directory: " + dirPath);
-            } else {
-                LOGGER.warning("Failed to create directory: " + dirPath);
-            }
+        if (!dir.exists() && !dir.mkdirs()) {
+            LOGGER.warning("Failed to create directory: " + dirPath);
         }
     }
 
     /**
-     * Get the path for a new report file
+     * Returns the path for a new report file.
      */
     public static String getReportPath(String reportType) {
         String timestamp = LocalDateTime.now().format(REPORT_DATE_FORMAT);
@@ -53,7 +54,19 @@ public class DataStorage {
     }
 
     /**
-     * Save a report to a file
+     * Returns the path to the reports directory.
+     */
+    public static String getReportsDirectory() {
+        return REPORTS_DIR;
+    }
+
+    // --- Report Methods ---
+
+    /**
+     * Saves a report to a file.
+     * @param reportType The type of report.
+     * @param content The report content.
+     * @throws IOException if saving fails.
      */
     public static void saveReport(String reportType, String content) throws IOException {
         String reportPath = getReportPath(reportType);
@@ -66,8 +79,10 @@ public class DataStorage {
         }
     }
 
+    // --- Serialization Utilities ---
+
     /**
-     * Save an object to a file using serialization
+     * Saves an object to a file using serialization.
      */
     private static <T> void saveObject(T object, String filename) throws IOException {
         String filePath = DATA_DIR + File.separator + filename;
@@ -82,8 +97,9 @@ public class DataStorage {
     }
 
     /**
-     * Load an object from a file using deserialization
+     * Loads an object from a file using deserialization.
      */
+    @SuppressWarnings("unchecked")
     private static <T> T loadObject(String filename) throws IOException, ClassNotFoundException {
         String filePath = DATA_DIR + File.separator + filename;
         try (FileInputStream fis = new FileInputStream(filePath);
@@ -100,8 +116,58 @@ public class DataStorage {
         }
     }
 
+    // --- User Data Methods ---
+
     /**
-     * Create a backup of all data files
+     * Saves the list of users.
+     */
+    public static void saveUsers(List<felosy.authentication.User> users) throws IOException {
+        saveObject(users, USERS_FILE);
+    }
+
+    /**
+     * Loads the list of users.
+     */
+    public static List<felosy.authentication.User> loadUsers() throws IOException, ClassNotFoundException {
+        return loadObject(USERS_FILE);
+    }
+
+    // --- Portfolio Data Methods ---
+
+    /**
+     * Saves the list of portfolios.
+     */
+    public static void savePortfolios(List<felosy.assetmanagement.Portfolio> portfolios) throws IOException {
+        saveObject(portfolios, PORTFOLIOS_FILE);
+    }
+
+    /**
+     * Loads the list of portfolios.
+     */
+    public static List<felosy.assetmanagement.Portfolio> loadPortfolios() throws IOException, ClassNotFoundException {
+        return loadObject(PORTFOLIOS_FILE);
+    }
+
+    // --- Asset Data Methods ---
+
+    /**
+     * Saves the list of assets.
+     */
+    public static void saveAssets(List<felosy.assetmanagement.Asset> assets) throws IOException {
+        saveObject(assets, ASSETS_FILE);
+    }
+
+    /**
+     * Loads the list of assets.
+     */
+    public static List<felosy.assetmanagement.Asset> loadAssets() throws IOException, ClassNotFoundException {
+        return loadObject(ASSETS_FILE);
+    }
+
+    // --- Backup and Clear Methods ---
+
+    /**
+     * Creates a backup of all data files.
      */
     public static void createBackup() throws IOException {
         String timestamp = LocalDateTime.now().format(BACKUP_DATE_FORMAT);
@@ -117,7 +183,7 @@ public class DataStorage {
     }
 
     /**
-     * Backup a single file
+     * Backs up a single file.
      */
     private static void backupFile(String filename, String backupPath) throws IOException {
         File sourceFile = new File(DATA_DIR + File.separator + filename);
@@ -135,7 +201,7 @@ public class DataStorage {
     }
 
     /**
-     * Clear all serialized data
+     * Clears all serialized data (users, portfolios, assets, and reports).
      */
     public static void clearAllData() throws IOException {
         // Create backup before clearing
@@ -153,7 +219,7 @@ public class DataStorage {
     }
 
     /**
-     * Delete a single file
+     * Deletes a single file from the data directory.
      */
     private static void deleteFile(String filename) {
         File file = new File(DATA_DIR + File.separator + filename);
@@ -163,7 +229,7 @@ public class DataStorage {
     }
 
     /**
-     * Clear all files in a directory
+     * Clears all files in a directory.
      */
     private static void clearDirectory(String dirPath) {
         File dir = new File(dirPath);
@@ -177,32 +243,5 @@ public class DataStorage {
                 }
             }
         }
-    }
-
-    // User data methods
-    public static void saveUsers(List<felosy.authentication.User> users) throws IOException {
-        saveObject(users, USERS_FILE);
-    }
-
-    public static List<felosy.authentication.User> loadUsers() throws IOException, ClassNotFoundException {
-        return loadObject(USERS_FILE);
-    }
-
-    // Portfolio data methods
-    public static void savePortfolios(List<felosy.assetmanagement.Portfolio> portfolios) throws IOException {
-        saveObject(portfolios, PORTFOLIOS_FILE);
-    }
-
-    public static List<felosy.assetmanagement.Portfolio> loadPortfolios() throws IOException, ClassNotFoundException {
-        return loadObject(PORTFOLIOS_FILE);
-    }
-
-    // Asset data methods
-    public static void saveAssets(List<felosy.assetmanagement.Asset> assets) throws IOException {
-        saveObject(assets, ASSETS_FILE);
-    }
-
-    public static List<felosy.assetmanagement.Asset> loadAssets() throws IOException, ClassNotFoundException {
-        return loadObject(ASSETS_FILE);
     }
 } 
