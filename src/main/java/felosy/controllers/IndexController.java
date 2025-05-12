@@ -18,5 +18,9 @@ public class IndexController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
     }    
-    
+
+
+    public void handleBtn() {
+        System.out.println("Hello World");
+    }
 }
