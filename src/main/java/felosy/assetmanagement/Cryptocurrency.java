@@ -4,6 +4,22 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 public final class Cryptocurrency extends Asset {
+    public enum CoinType {
+        BTC,
+        ETH,
+        XRP,
+        LTC,
+        ADA,
+        DOT,
+        DOGE,
+        OTHER;
+
+        @Override
+        public String toString() {
+            return this.name();
+        }
+    }
+    
     private CoinType coin;
     private BigDecimal amount;
     

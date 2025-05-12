@@ -31,22 +31,6 @@ public abstract class Asset {
         this.actionDate = actionDate != null ? actionDate : new Date();
     }
 
-    /*
-    public abstract float getValue();
-
-    public boolean update() {
-        // Implementation for updating asset details
-        System.out.println("Updating asset: " + name);
-        return true;
-    }
-
-    public boolean delete() {
-        // Implementation for deleting an asset
-        System.out.println("Deleting asset: " + name);
-        return true;
-    }
-    */
-
     /**
      *
      * @return current price of Asset
@@ -104,6 +88,9 @@ public abstract class Asset {
     }
     
     public void setActionDate(Date actionDate) {
+        if (actionDate == null) {
+            throw new IllegalArgumentException("Action date can not be null");
+        }
         this.actionDate = actionDate;
     }
     

@@ -5,6 +5,25 @@ import java.math.RoundingMode;
 import java.util.Date;
 
 public class RealEstate extends Asset {
+    public enum PropertyType {
+        SINGLE_FAMILY_RESIDENTIAL,
+        MULTI_FAMILY_RESIDENTIAL,
+        OFFICE, 
+        INDUSTRIAL, 
+        RETAIL, 
+        SELF_STORAGE, 
+        LAND, 
+        HOTELS_HOSPITALS, 
+        MIXED_USE,
+        OTHER;
+        
+        @Override
+        public String toString() {
+            return this.name();
+        }
+    }
+    
+    
     private String location;
     private BigDecimal areaSquareMeters;
     private PropertyType propertyType;

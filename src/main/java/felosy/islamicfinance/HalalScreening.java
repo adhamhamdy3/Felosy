@@ -3,7 +3,8 @@ package felosy.islamicfinance;
 import java.util.*;
 import java.util.logging.Level;
 import java.math.BigDecimal;
-import felosy.assetmanagement.SimpleAsset;
+import felosy.assetmanagement.Asset;
+import felosy.assetmanagement.Portfolio;
 import felosy.reporting.Report;
 import felosy.authentication.User;
 import felosy.islamicfinance.model.ComplianceRule;
@@ -11,21 +12,24 @@ import felosy.islamicfinance.config.IslamicFinanceConfig;
 
 /**
  * Screens assets for Islamic compliance
- * Simplified for academic purposes
  */
 public class HalalScreening extends IslamicFinanceBase {
     private final List<ComplianceRule> complianceRules;
     private final Map<String, Boolean> screeningResults;
-    private final Map<String, SimpleAsset> portfolioAssets;
+    private final Portfolio portfolio;
     private final IslamicFinanceConfig config;
+    private Date lastScreeningDate;
 
-    public HalalScreening(String portfolioId) {
-        super(portfolioId);
+    public HalalScreening(Portfolio portfolio) {
+        super(portfolio.getPortfolioId());
+        if (portfolio == null) {
+            throw new IllegalArgumentException("Portfolio cannot be null");
+        }
+        this.portfolio = portfolio;
         this.config = IslamicFinanceConfig.getInstance();
         this.complianceRules = initializeRules();
         this.screeningResults = new HashMap<>();
-        this.portfolioAssets = new HashMap<>();
-        initializePortfolioAssets();
+        this.lastScreeningDate = null;
     }
 
     private List<ComplianceRule> initializeRules() {
@@ -56,36 +60,25 @@ public class HalalScreening extends IslamicFinanceBase {
         ));
         return rules;
     }
-    
-    private void initializePortfolioAssets() {
-        // Simplified portfolio assets for academic purposes
-        portfolioAssets.put("Stock-AAPL", createAsset("AAPL", "Apple Inc.", 100.0));
-        portfolioAssets.put("Stock-ADNOC", createAsset("ADNOC", "Abu Dhabi National Oil Company", 200.0));
-        portfolioAssets.put("RealEstate-Dubai1", createAsset("DXB1", "Dubai Property", 500.0));
-        portfolioAssets.put("Gold-Investment1", createAsset("GOLD1", "Gold Investment", 50.0));
-    }
-    
-    private SimpleAsset createAsset(String symbol, String name, double value) {
-        return new SimpleAsset(
-            symbol + "-" + System.currentTimeMillis(),
-            name,
-            symbol,
-            BigDecimal.valueOf(value)
-        );
-    }
 
     @Override
     public boolean checkCompliance() {
         try {
             boolean allCompliant = true;
-            for (Map.Entry<String, SimpleAsset> entry : portfolioAssets.entrySet()) {
-                String assetId = entry.getKey();
-                boolean isCompliant = checkAssetCompliance(assetId);
+            screeningResults.clear();
+            
+            for (Asset asset : portfolio.getAssets()) {
+                String assetId = asset.getAssetId();
+                boolean isCompliant = checkAssetCompliance(asset);
                 screeningResults.put(assetId, isCompliant);
                 allCompliant &= isCompliant;
+                
+                LOGGER.info(String.format("Asset %s compliance check: %s", 
+                    assetId, isCompliant ? "Compliant" : "Non-Compliant"));
             }
             
             isCompliant = allCompliant;
+            lastScreeningDate = new Date();
             logComplianceCheck("Portfolio screening", isCompliant);
             updateLastUpdateDate();
             return isCompliant;
@@ -95,10 +88,9 @@ public class HalalScreening extends IslamicFinanceBase {
         }
     }
 
-    private boolean checkAssetCompliance(String assetId) {
-        SimpleAsset asset = portfolioAssets.get(assetId);
+    private boolean checkAssetCompliance(Asset asset) {
         if (asset == null) {
-            LOGGER.warning("Asset not found: " + assetId);
+            LOGGER.warning("Null asset encountered during compliance check");
             return false;
         }
 
@@ -114,55 +106,79 @@ public class HalalScreening extends IslamicFinanceBase {
             };
 
             if (!ruleCompliant) {
-                LOGGER.info(String.format("Asset %s failed compliance rule: %s", assetId, rule.getName()));
+                LOGGER.info(String.format("Asset %s failed compliance rule: %s", 
+                    asset.getAssetId(), rule.getName()));
                 return false;
             }
         }
         return true;
     }
 
-    private boolean checkInterestBasedCompliance(SimpleAsset asset) {
-        // Simplified check - in reality, this would involve detailed analysis
-        return !asset.getSymbol().equals("AAPL"); // Example: Apple is non-compliant
+    private boolean checkInterestBasedCompliance(Asset asset) {
+        // In a real implementation, this would check:
+        // 1. If the asset is interest-bearing
+        // 2. If the company's business model is based on interest
+        // 3. If the company's financial statements show significant interest income
+        return !asset.getName().equals("AAPL"); // Simplified example
     }
 
-    private boolean checkEthicalBusinessCompliance(SimpleAsset asset) {
-        // Simplified check - in reality, this would involve detailed analysis
-        return true; // All assets are considered ethical in this example
+    private boolean checkEthicalBusinessCompliance(Asset asset) {
+        // In a real implementation, this would check:
+        // 1. If the company is involved in non-halal activities
+        // 2. If the company's products/services are halal
+        // 3. If the company's business practices are ethical
+        return true; // Simplified example
     }
 
-    private boolean checkDebtRatioCompliance(SimpleAsset asset, double threshold) {
-        // Simplified check - in reality, this would involve detailed analysis
-        return true; // All assets are considered compliant in this example
+    private boolean checkDebtRatioCompliance(Asset asset, double threshold) {
+        // In a real implementation, this would:
+        // 1. Calculate the company's debt ratio
+        // 2. Compare it against the threshold
+        // 3. Consider the industry average
+        return true; // Simplified example
     }
 
-    private boolean checkNonHalalIncomeCompliance(SimpleAsset asset, double threshold) {
-        // Simplified check - in reality, this would involve detailed analysis
-        return true; // All assets are considered compliant in this example
+    private boolean checkNonHalalIncomeCompliance(Asset asset, double threshold) {
+        // In a real implementation, this would:
+        // 1. Calculate the percentage of non-halal income
+        // 2. Compare it against the threshold
+        // 3. Consider the industry context
+        return true; // Simplified example
     }
 
-    public List<SimpleAsset> filterNonCompliant() {
-        return portfolioAssets.values().stream()
+    public List<Asset> filterNonCompliant() {
+        return portfolio.getAssets().stream()
             .filter(asset -> !screeningResults.getOrDefault(asset.getAssetId(), false))
             .toList();
     }
 
     public Report generateComplianceReport(User user) {
         Report report = new Report(
-            "HLR-" + portfolioId.substring(0, 8),
+            "HLR-" + portfolio.getPortfolioId().substring(0, 8),
             "Halal Compliance Report",
             new Date(),
             user
         );
         
+        // Add portfolio information
+        report.addData("Portfolio Name", portfolio.getName());
+        report.addData("Portfolio Description", portfolio.getDescription());
+        report.addData("Total Portfolio Value", portfolio.getNetWorth());
+        
         // Add compliance summary
-        report.addData("Total Assets", portfolioAssets.size());
+        report.addData("Total Assets", portfolio.getAssets().size());
         report.addData("Compliant Assets", screeningResults.values().stream().filter(b -> b).count());
         report.addData("Non-Compliant Assets", screeningResults.values().stream().filter(b -> !b).count());
+        report.addData("Last Screening Date", lastScreeningDate);
         
         // Add asset-wise compliance status
-        for (Map.Entry<String, Boolean> entry : screeningResults.entrySet()) {
-            report.addData(entry.getKey(), entry.getValue() ? "Compliant" : "Non-Compliant");
+        for (Asset asset : portfolio.getAssets()) {
+            String assetId = asset.getAssetId();
+            boolean isCompliant = screeningResults.getOrDefault(assetId, false);
+            report.addData(asset.getName(), 
+                String.format("%s (Value: %s)", 
+                    isCompliant ? "Compliant" : "Non-Compliant",
+                    asset.getCurrentValue()));
         }
         
         return report;
@@ -177,7 +193,11 @@ public class HalalScreening extends IslamicFinanceBase {
         return new HashMap<>(screeningResults);
     }
     
-    public Map<String, SimpleAsset> getPortfolioAssets() {
-        return new HashMap<>(portfolioAssets);
+    public Date getLastScreeningDate() {
+        return lastScreeningDate != null ? new Date(lastScreeningDate.getTime()) : null;
+    }
+    
+    public Portfolio getPortfolio() {
+        return portfolio;
     }
 }
