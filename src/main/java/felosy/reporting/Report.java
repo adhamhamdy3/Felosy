@@ -111,7 +111,7 @@ public class Report extends BaseReport {
         section.append("User ID: ").append(user.getUserId()).append("\n");
         section.append("Name: ").append(user.getUserName()).append("\n");
         section.append("Email: ").append(user.getEmail()).append("\n");
-        section.append("User Category: ").append(user.getUserCategory()).append("\n\n");
+        // section.append("User Category: ").append(user.getUserCategory()).append("\n\n");
         return section.toString();
     }
     

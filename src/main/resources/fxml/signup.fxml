@@ -1,71 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.AuthController">
-   <children>
-      <StackPane prefHeight="472.0" prefWidth="600.0">
-         <children>
-            <Button mnemonicParsing="false" text="Return" />
-         </children>
-      </StackPane>
-      <VBox layoutX="193.0" layoutY="10.0" prefHeight="462.0" prefWidth="234.0">
-         <children>
-            <Label id="form_label" alignment="CENTER" prefHeight="82.0" prefWidth="290.0" text="Create an Account" VBox.vgrow="NEVER">
-               <font>
-                  <Font size="28.0" />
-               </font>
-               <VBox.margin>
-                  <Insets bottom="20.0" />
-               </VBox.margin>
-            </Label>
-            <VBox prefHeight="200.0" prefWidth="138.0">
-               <children>
-                  <Label id="username_label" text="Username" />
-                  <TextField id="username_field" fx:id="username_field" promptText="Enter your username" />
-               </children>
-            </VBox>
-            <VBox prefHeight="200.0" prefWidth="100.0">
-               <children>
-                  <Label id="email_label" text="Email" />
-                  <TextField id="email_field" fx:id="email_field" promptText="Enter your email address" />
-               </children>
-            </VBox>
-            <VBox prefHeight="200.0" prefWidth="100.0">
-               <children>
-                  <Label id="password_label" text="Password" />
-                  <TextField id="password_field" fx:id="password_field" accessibleRole="PASSWORD_FIELD" promptText="Enter your password" />
-               </children>
-            </VBox>
-            <VBox prefHeight="165.0" prefWidth="235.0">
-               <children>
-                  <Label id="confirmPass_label" text="Confirm Password" />
-                  <TextField id="confirmPass_field" fx:id="confirmPass_field" accessibleRole="PASSWORD_FIELD" promptText="Confirm your password" />
-               </children>
-            </VBox>
-            <VBox prefHeight="200.0" prefWidth="100.0">
-               <children>
-                  <Button id="signup_btn" fx:id="signup_btn" mnemonicParsing="false" text="Sign Up">
-                     <VBox.margin>
-                        <Insets bottom="10.0" left="89.0" top="10.0" />
-                     </VBox.margin>
-                  </Button>
-                  <Hyperlink id="login_btn" fx:id="login_btn" onAction="#switchToLogin" text="Already have an account? Login">
-                     <VBox.margin>
-                        <Insets left="20.0" />
-                     </VBox.margin>
-                  </Hyperlink>
-               </children>
-            </VBox>
-         </children>
-      </VBox>
-   </children>
+    <Label id="form_label" alignment="CENTER" layoutX="119.0" prefHeight="70.0" prefWidth="361.0" text="Create an Account">
+        <font>
+            <Font size="28.0" />
+        </font>
+    </Label>
+    <TextField id="username_field" fx:id="username_field" layoutX="225.0" layoutY="88.0" promptText="Enter your username" />
+    <TextField id="password_field" fx:id="password_field" accessibleRole="PASSWORD_FIELD" layoutX="225.0" layoutY="196.0" promptText="Enter your password" />
+    <TextField id="confirmPass_field" fx:id="confirmPass_field" accessibleRole="PASSWORD_FIELD" layoutX="225.0" layoutY="257.0" promptText="Confirm your password" />
+    <TextField id="email_field" fx:id="email_field" layoutX="225.0" layoutY="140.0" promptText="Enter your email address" />
+    <Label id="username_label" layoutX="225.0" layoutY="70.0" text="Username" />
+    <Label id="password_label" layoutX="226.0" layoutY="178.0" text="Password" />
+    <Label id="confirmPass_label" layoutX="225.0" layoutY="239.0" text="Confirm Password" />
+    <Label id="email_label" layoutX="226.0" layoutY="122.0" text="Email" />
+    <Button id="signup_btn" fx:id="signup_btn" layoutX="270.0" layoutY="299.0" mnemonicParsing="false" text="Sign Up" />
+    <Hyperlink id="login_btn" fx:id="login_btn" layoutX="211.0" layoutY="350.0" onAction="#switchToLogin" text="Already have an account? Login" />
 </AnchorPane>

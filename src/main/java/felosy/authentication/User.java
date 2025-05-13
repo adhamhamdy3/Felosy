@@ -1,65 +1,166 @@
 package felosy.authentication;
 import java.io.Serializable;
-import java.util.*;
+import java.util.UUID;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * User class that maintains basic user information and wealth data
+ * with robust defensive programming and error handling
+ */
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
-    
+
     // Basic user information
     private String userId;
     private String userName;
     private String email;
     private String passwordHash; // Store hashed password
-    
-    // Demographic fields
-    private int age;
-    private Gender gender;
-    private String postalCode;
-    private EducationLevel educationLevel;
-    private double income;
-    private double techUsagePattern; // Scale from 0.0 -> 1.0
-    private UserCategory userCategory;
-    
-    // Enums for demographic data
-    public enum Gender {
-        MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY
+    private double currentWealth; // Added current wealth field
+
+    // Constants for validation
+    private static final double MIN_WEALTH = 0.0;
+    private static final double MAX_WEALTH = Double.MAX_VALUE;
+    private static final int MIN_USERNAME_LENGTH = 3;
+    private static final int MAX_USERNAME_LENGTH = 50;
+
+    /**
+     * Constructor with validation for all fields
+     *
+     * @param userName User's name (must be between 3-50 characters)
+     * @param email User's email address (must be valid format)
+     * @param password User's plaintext password (will be hashed)
+     * @param currentWealth User's current wealth amount (must be non-negative)
+     * @throws IllegalArgumentException if any validation check fails
+     */
+    public User(String userName, String email, String password, double currentWealth) {
+        // Validate all inputs before assignment
+        validateUserName(userName);
+        validateEmail(email);
+        validatePassword(password);
+        validateWealth(currentWealth);
+
+        // Once validation passes, assign values
+        this.userId = generateUniqueUserId();
+        this.userName = userName;
+        this.email = email;
+        this.passwordHash = hashPassword(password);
+        this.currentWealth = currentWealth;
     }
 
-    public enum EducationLevel {
-        HIGH_SCHOOL, SOME_COLLEGE, ASSOCIATES_DEGREE, 
-        BACHELORS_DEGREE, MASTERS_DEGREE, DOCTORAL_DEGREE, 
-        PROFESSIONAL_DEGREE, OTHER
-    }
-    
-    public enum UserCategory {
-        YOUNG_ADULT, MID_CAREER_PROFESSIONAL, HIGH_NET_WORTH_INDIVIDUAL,
-        RETIREE, SELF_EMPLOYED_ENTREPRENEUR
-    }
-    
-    // Basic constructor with essential fields
+    /**
+     * Basic constructor with default wealth value of 0.0
+     */
     public User(String userName, String email, String password) {
-        this.userId = UUID.randomUUID().toString(); // to be checked with checkers in utilities, to ensure that it does not exist before
-        this.userName = userName; // to be checked with checkers in utilities
-        this.email = email; // to be checked with checkers in utilities
-        this.passwordHash = hashPassword(password);
+        this(userName, email, password, 0.0);
     }
-    
-    // Full constructor with all fields
-    public User(String userName, String email, String password, 
-                int age, Gender gender, String postalCode, 
-                EducationLevel educationLevel, double income, double techUsagePattern) {
-        this(userName, email, password);
-        this.age = age;
-        this.gender = gender;
-        this.postalCode = postalCode;
-        this.educationLevel = educationLevel;
-        this.income = income;
-        setTechUsagePattern(techUsagePattern); // Using setter for validation
-        determineUserCategory(); // Determine category based on age and other factors
+
+    /**
+     * Generates a unique user ID
+     *
+     * @return A unique user ID string
+     */
+    private String generateUniqueUserId() {
+        return UUID.randomUUID().toString();
     }
-    
+
+    /**
+     * Validates user name
+     *
+     * @param userName The user name to validate
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validateUserName(String userName) {
+        if (userName == null) {
+            throw new IllegalArgumentException("Username cannot be null");
+        }
+
+        userName = userName.trim();
+
+        if (userName.isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+
+        if (userName.length() < MIN_USERNAME_LENGTH || userName.length() > MAX_USERNAME_LENGTH) {
+            throw new IllegalArgumentException("Username must be between " +
+                    MIN_USERNAME_LENGTH + " and " + MAX_USERNAME_LENGTH + " characters");
+        }
+    }
+
+    /**
+     * Validates email address format
+     *
+     * @param email The email address to validate
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validateEmail(String email) {
+        if (email == null) {
+            throw new IllegalArgumentException("Email cannot be null");
+        }
+
+        email = email.trim();
+
+        if (email.isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be empty");
+        }
+
+        // Basic email validation (contains @ and at least one dot after @)
+        if (!email.contains("@") || email.indexOf('@') > email.lastIndexOf('.')) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+    }
+
+    /**
+     * Validates password
+     *
+     * @param password The password to validate
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validatePassword(String password) {
+        if (password == null) {
+            throw new IllegalArgumentException("Password cannot be null");
+        }
+
+        if (password.isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be empty");
+        }
+
+        if (password.length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters long");
+        }
+    }
+
+    /**
+     * Validates wealth amount
+     *
+     * @param wealth The wealth amount to validate
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validateWealth(double wealth) {
+        if (Double.isNaN(wealth)) {
+            throw new IllegalArgumentException("Wealth cannot be NaN");
+        }
+
+        if (Double.isInfinite(wealth)) {
+            throw new IllegalArgumentException("Wealth cannot be infinite");
+        }
+
+        if (wealth < MIN_WEALTH) {
+            throw new IllegalArgumentException("Wealth cannot be negative");
+        }
+
+        if (wealth > MAX_WEALTH) {
+            throw new IllegalArgumentException("Wealth exceeds maximum allowed value");
+        }
+    }
+
+    /**
+     * Hash password with SHA-256
+     *
+     * @param password The plaintext password to hash
+     * @return The hashed password as hexadecimal string
+     * @throws RuntimeException if the hashing algorithm is not available
+     */
     private String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -72,189 +173,96 @@ public class User implements Serializable {
             }
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error hashing password", e);
+            throw new RuntimeException("Error hashing password: SHA-256 algorithm not available", e);
         }
     }
-    
+
+    /**
+     * Authenticate a user with password
+     *
+     * @param password The plaintext password to verify
+     * @return true if password matches, false otherwise
+     */
     public boolean authenticate(String password) {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
         return passwordHash.equals(hashPassword(password));
     }
-    
-    public DemographicDetails getDemographicDetails() {
-        // Return demographic details
-        return new DemographicDetails(age, gender, postalCode, 
-                educationLevel, income, techUsagePattern, userCategory);
-    }
-    
-    // Method to determine user category based on age and other factors
-    private void determineUserCategory() {
-        if (age >= 65) {
-            this.userCategory = UserCategory.RETIREE;
-        } else if (age >= 30 && age <= 50) {
-            if (income > 200000) {
-                this.userCategory = UserCategory.HIGH_NET_WORTH_INDIVIDUAL;
-            } else {
-                this.userCategory = UserCategory.MID_CAREER_PROFESSIONAL;
-            }
-        } else if (age < 30) {
-            this.userCategory = UserCategory.YOUNG_ADULT;
-        }
-        
-        // Override based on income if very high
-        if (income > 500000) {
-            this.userCategory = UserCategory.HIGH_NET_WORTH_INDIVIDUAL;
-        }
-    }
-    
-    // Manual override for user category
-    public void setUserCategory(UserCategory category) {
-        this.userCategory = category;
-    }
-    
-    // Getters and setters
+
+    // Getters
+
     public String getUserId() {
         return userId;
     }
-    
+
     public String getUserName() {
         return userName;
     }
-    
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-    
+
     public String getEmail() {
         return email;
     }
-    
+
+    public double getCurrentWealth() {
+        return currentWealth;
+    }
+
+    // Setters with validation
+
+    public void setUserName(String userName) {
+        validateUserName(userName);
+        this.userName = userName;
+    }
+
     public void setEmail(String email) {
+        validateEmail(email);
         this.email = email;
     }
-    
-    public void setPassword(String newPassword) {
-        this.passwordHash = hashPassword(newPassword);
+
+    public void setPassword(String password) {
+        validatePassword(password);
+        this.passwordHash = hashPassword(password);
     }
-    
-    public int getAge() {
-        return age;
+
+    public void setCurrentWealth(double wealth) {
+        validateWealth(wealth);
+        this.currentWealth = wealth;
     }
-    
-    public void setAge(int age) {
-        this.age = age;
-        determineUserCategory(); // Recalculate category when age changes
-    }
-    
-    public Gender getGender() {
-        return gender;
-    }
-    
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
-    
-    public String getPostalCode() {
-        return postalCode;
-    }
-    
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-    
-    public EducationLevel getEducationLevel() {
-        return educationLevel;
-    }
-    
-    public void setEducationLevel(EducationLevel educationLevel) {
-        this.educationLevel = educationLevel;
-    }
-    
-    public double getIncome() {
-        return income;
-    }
-    
-    public void setIncome(double income) {
-        this.income = income;
-        determineUserCategory(); // Recalculate category when income changes
-    }
-    
-    public double getTechUsagePattern() {
-        return techUsagePattern;
-    }
-    
-    public void setTechUsagePattern(double techUsagePattern) {
-        // Ensure value is between 0.0 and 1.0
-        if (techUsagePattern < 0.0 || techUsagePattern > 1.0) {
-            throw new IllegalArgumentException("Tech usage pattern must be between 0.0 and 1.0");
+
+    /**
+     * Add to current wealth (with validation)
+     *
+     * @param amount Amount to add to current wealth
+     * @throws IllegalArgumentException if amount is invalid
+     */
+    public void addWealth(double amount) {
+        if (Double.isNaN(amount) || Double.isInfinite(amount)) {
+            throw new IllegalArgumentException("Invalid wealth amount");
         }
-        this.techUsagePattern = techUsagePattern;
+
+        double newWealth = currentWealth + amount;
+
+        // Check for overflow
+        if (amount > 0 && newWealth < currentWealth) {
+            throw new IllegalArgumentException("Wealth addition would cause overflow");
+        }
+
+        // Check for minimum bound
+        if (newWealth < MIN_WEALTH) {
+            throw new IllegalArgumentException("Cannot reduce wealth below " + MIN_WEALTH);
+        }
+
+        currentWealth = newWealth;
     }
-    
-    public UserCategory getUserCategory() {
-        return userCategory;
-    }
-    
+
     @Override
     public String toString() {
         return "User{" +
                 "userId='" + userId + '\'' +
                 ", userName='" + userName + '\'' +
                 ", email='" + email + '\'' +
-                ", age=" + age +
-                ", gender=" + gender +
-                ", postalCode='" + postalCode + '\'' +
-                ", educationLevel=" + educationLevel +
-                ", income=" + String.format("$%,.2f", income) +
-                ", techUsagePattern=" + String.format("%.2f", techUsagePattern) +
-                ", userCategory=" + userCategory +
-                '}';
-    }
-}
-
-// Class to return demographic details
-class DemographicDetails implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
-    private int age;
-    private User.Gender gender;
-    private String postalCode;
-    private User.EducationLevel educationLevel;
-    private double income;
-    private double techUsagePattern;
-    private User.UserCategory userCategory;
-    
-    public DemographicDetails(int age, User.Gender gender, String postalCode, 
-                             User.EducationLevel educationLevel,
-                             double income, double techUsagePattern, 
-                             User.UserCategory userCategory) {
-        this.age = age;
-        this.gender = gender;
-        this.postalCode = postalCode;
-        this.educationLevel = educationLevel;
-        this.income = income;
-        this.techUsagePattern = techUsagePattern;
-        this.userCategory = userCategory;
-    }
-    
-    // Getters for all fields
-    public int getAge() { return age; }
-    public User.Gender getGender() { return gender; }
-    public String getPostalCode() { return postalCode; }
-    public User.EducationLevel getEducationLevel() { return educationLevel; }
-    public double getIncome() { return income; }
-    public double getTechUsagePattern() { return techUsagePattern; }
-    public User.UserCategory getUserCategory() { return userCategory; }
-    
-    @Override
-    public String toString() {
-        return "DemographicDetails{" +
-                "age=" + age +
-                ", gender=" + gender +
-                ", postalCode='" + postalCode + '\'' +
-                ", educationLevel=" + educationLevel +
-                ", income=" + String.format("$%,.2f", income) +
-                ", techUsagePattern=" + String.format("%.2f", techUsagePattern) +
-                ", userCategory=" + userCategory +
+                ", currentWealth=" + String.format("$%,.2f", currentWealth) +
                 '}';
     }
 }
