@@ -4,36 +4,33 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import felosy.App;
 import felosy.authentication.User;
-import felosy.authentication.AuthenticationService;
+import felosy.authentication.Authentication;
 import felosy.utils.AlertUtil;
 import felosy.utils.ValidationUtil;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 /**
- * Controller for handling authentication operations including login and signup.
+ * A controller for authentication views. Coordinates between authentication views and authentication service.
  *
  * @author Adham Hamdy
  */
 public class AuthController implements Initializable {
-
-
     // Login form components
     public TextField login_username_field;
     public Label login_username_error;
-    
+
     public TextField login_password_field;
     public Label login_password_error;
-    
-    // Login error text
-    public Text loginErrorText;
-
 
     // Signup form components
     public TextField signup_username_field;
@@ -47,226 +44,179 @@ public class AuthController implements Initializable {
 
     public TextField signup_email_field;
     public Label signup_email_error;
-    
-    // Signup error text
-    public Text signupErrorText;
 
+    // Navigation buttons
+    public Button return_btn;
+    public Button signup_btn;
+    public Button login_btn;
+    public Hyperlink login_link;
 
-    // Service for authentication operations
-    private final AuthenticationService authService = new AuthenticationService();
+    private String sessionToken;
 
-    /**
-     * Initializes the controller class.
-     * @param url The location used to resolve relative paths for the root object
-     * @param rb The resources used to localize the root object
-     */
     @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        // Clear any error messages on startup
-        if (loginErrorText != null) {
-            loginErrorText.setText("");
-            loginErrorText.setVisible(false);
-        }
-
-        if (signupErrorText != null) {
-            signupErrorText.setText("");
-            signupErrorText.setVisible(false);
-        }
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        // Initialize the authentication system
+        Authentication.initialize();
     }
 
     /**
-     * Handles the login button click event.
-     * Validates user input and attempts to authenticate the user.
-     *
-     * @param event The button click event
-     */
-    @FXML
-    public void handleLogin(ActionEvent event) {
-        // Clear previous error messages
-        loginErrorText.setText("");
-        loginErrorText.setVisible(false);
-
-        try {
-            // Validate inputs
-            String username = login_username_field.getText().trim();
-            String password = login_password_field.getText();
-
-            if (username.isEmpty() || password.isEmpty()) {
-                showLoginError("Username and password are required");
-                return;
-            }
-
-            // Attempt to authenticate user
-            boolean authenticated = authService.authenticateUser(username, password);
-
-            if (authenticated) {
-                // Authentication successful, navigate to main page
-                SceneHandler.switchToIndex();
-            } else {
-                // Authentication failed
-                showLoginError("Invalid username or password");
-            }
-        } catch (Exception e) {
-            // Handle unexpected errors
-            showLoginError("An error occurred: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Handles the signup button click event.
-     * Validates user input and attempts to create a new user account.
-     *
-     * @param event The button click event
+     * Handle user signup
+     * Validates input fields and registers the user if validation passes
      */
     @FXML
     public void handleSignup(ActionEvent event) {
-        // Clear previous error messages
-        signupErrorText.setText("");
-        signupErrorText.setVisible(false);
-
-        try {
-            // Get and validate input fields
-            String username = signup_username_field.getText().trim();
-            String password = signup_password_field.getText();
-            String confirmPassword = signup_confirmPass_field.getText();
-            String email = signup_email_field.getText().trim();
-
-            // Validate all fields
-            if (!validateSignupFields(username, password, confirmPassword, email)) {
-                return; // Validation failed, error already shown
-            }
-
-            // Create new user
-            User newUser = authService.createUser(username, email, password);
-
-            if (newUser != null) {
-                // Show success message
-                AlertUtil.showAlert(
-                        Alert.AlertType.INFORMATION,
-                        "Account Created",
-                        "Your account has been created successfully.",
-                        "Please log in with your new credentials."
-                );
-
-                // Switch to login page
-                SceneHandler.switchToLogin();
-            } else {
-                showSignupError("Failed to create account. Please try again.");
-            }
-        } catch (IllegalArgumentException e) {
-            // Handle validation errors from User class
-            showSignupError(e.getMessage());
-        } catch (Exception e) {
-            // Handle unexpected errors
-            showSignupError("An error occurred: " + e.getMessage());
-            e.printStackTrace();
+        // Reset all error messages
+        clearErrorMessages();
+        
+        // Get input values
+        String username = signup_username_field.getText();
+        String email = signup_email_field.getText();
+        String password = signup_password_field.getText();
+        String confirmPassword = signup_confirmPass_field.getText();
+        
+        // Validate inputs
+        boolean isValid = true;
+        
+        // Validate username
+        if (!ValidationUtil.isValidUsername(username)) {
+            signup_username_error.setText("Username must be 3-50 characters long");
+            isValid = false;
         }
-    }
-
-    /**
-     * Validates all signup form fields.
-     *
-     * @param username The username to validate
-     * @param password The password to validate
-     * @param confirmPassword The confirmation password to check
-     * @param email The email to validate
-     * @return true if all validations pass, false otherwise
-     */
-    private boolean validateSignupFields(String username, String password, String confirmPassword, String email) {
-        // Check for empty fields
-        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || email.isEmpty()) {
-            showSignupError("All fields are required");
-            return false;
-        }
-
-        // Validate username length
-        if (username.length() < 3 || username.length() > 50) {
-            showSignupError("Username must be between 3 and 50 characters");
-            return false;
-        }
-
-        // Check if username already exists
-        if (authService.isUsernameTaken(username)) {
-            showSignupError("Username already taken");
-            return false;
-        }
-
-        // Validate email format
+        
+        // Validate email
         if (!ValidationUtil.isValidEmail(email)) {
-            showSignupError("Invalid email format");
-            return false;
+            signup_email_error.setText("Please enter a valid email address");
+            isValid = false;
         }
-
-        // Check if email already exists
-        if (authService.isEmailTaken(email)) {
-            showSignupError("Email already registered");
-            return false;
+        
+        // Validate password
+        if (!ValidationUtil.isStrongPassword(password)) {
+            signup_password_error.setText("Password must be at least 8 characters with uppercase, lowercase, digit, and special character");
+            isValid = false;
         }
-
-        // Validate password strength
-        if (password.length() < 8) {
-            showSignupError("Password must be at least 8 characters long");
-            return false;
-        }
-
-        // Check if passwords match
+        
+        // Validate password confirmation
         if (!password.equals(confirmPassword)) {
-            showSignupError("Passwords do not match");
-            return false;
+            signup_confPass_error.setText("Passwords do not match");
+            isValid = false;
         }
-
-        return true;
+        
+        // If validation passes, register the user
+        if (isValid) {
+            User newUser = Authentication.registerUser(username, email, password);
+            
+            if (newUser != null) {
+                // Registration successful
+                AlertUtil.showInformation("Registration Successful: Your account has been created successfully. Please log in.");
+                
+                // Clear form fields
+                clearSignupFields();
+                
+                // Switch to login view
+                try {
+                    switchToLogin(event);
+                } catch (IOException e) {
+                    AlertUtil.showError("Navigation Error: " + e.getMessage());
+                }
+            } else {
+                // Registration failed
+                AlertUtil.showError("Registration Failed: This email may already be registered or there was a system error.");
+            }
+        }
     }
-
+    
     /**
-     * Displays an error message in the login form.
-     *
-     * @param errorMessage The error message to display
-     */
-    private void showLoginError(String errorMessage) {
-        loginErrorText.setText(errorMessage);
-        loginErrorText.setVisible(true);
-    }
-
-    /**
-     * Displays an error message in the signup form.
-     *
-     * @param errorMessage The error message to display
-     */
-    private void showSignupError(String errorMessage) {
-        signupErrorText.setText(errorMessage);
-        signupErrorText.setVisible(true);
-    }
-
-    /**
-     * Switches the view to the signup page.
-     *
-     * @param actionEvent The event that triggered this action
-     */
-    @FXML
-    public void switchToSignUp(ActionEvent actionEvent) {
-        SceneHandler.switchToSignUp();
-    }
-
-    /**
-     * Switches the view to the login page.
-     *
-     * @param actionEvent The event that triggered this action
+     * Handle user login
+     * Validates credentials and logs in the user if validation passes
      */
     @FXML
-    public void switchToLogin(ActionEvent actionEvent) {
-        SceneHandler.switchToLogin();
+    public void handleLogin(ActionEvent event) {
+        // Reset error messages
+        login_username_error.setText("");
+        login_password_error.setText("");
+        
+        // Get input values
+        String usernameOrEmail = login_username_field.getText();
+        String password = login_password_field.getText();
+        
+        // Validate inputs
+        boolean isValid = true;
+        
+        if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
+            login_username_error.setText("Please enter your username or email");
+            isValid = false;
+        }
+        
+        if (password == null || password.trim().isEmpty()) {
+            login_password_error.setText("Please enter your password");
+            isValid = false;
+        }
+        
+        // If validation passes, attempt login
+        if (isValid) {
+            sessionToken = Authentication.login(usernameOrEmail, password);
+            
+            if (sessionToken != null) {
+                // Login successful
+                User currentUser = Authentication.getCurrentUser(sessionToken);
+                AlertUtil.showInformation("Login Successful: Welcome, " + currentUser.getUserName() + "!");
+                
+                // Navigate to main application
+                try {
+                    switchToIndex(event);
+                } catch (IOException e) {
+                    AlertUtil.showError("Navigation Error: " + e.getMessage());
+                }
+            } else {
+                // Login failed
+                AlertUtil.showError("Login Failed: Invalid username/email or password");
+            }
+        }
     }
-
+    
     /**
-     * Switches the view to the index/main page.
-     * Only accessible after successful authentication.
-     *
-     * @param actionEvent The event that triggered this action
+     * Switch to the login view
      */
     @FXML
-    public void switchToIndex(ActionEvent actionEvent) {
-        SceneHandler.switchToIndex();
+    public void switchToLogin(ActionEvent event) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
+        Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.show();
+    }
+    
+    /**
+     * Switch to the index/main view
+     */
+    @FXML
+    public void switchToIndex(ActionEvent event) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource("/fxml/index.fxml"));
+        Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.show();
+    }
+    
+    /**
+     * Clear all error messages
+     */
+    private void clearErrorMessages() {
+        signup_username_error.setText("");
+        signup_email_error.setText("");
+        signup_password_error.setText("");
+        signup_confPass_error.setText("");
+        login_username_error.setText("");
+        login_password_error.setText("");
+    }
+    
+    /**
+     * Clear signup form fields
+     */
+    private void clearSignupFields() {
+        signup_username_field.clear();
+        signup_email_field.clear();
+        signup_password_field.clear();
+        signup_confirmPass_field.clear();
     }
 }
