@@ -46,6 +46,7 @@ public class AuthController implements Initializable {
     @FXML private Text signupErrorText;
     @FXML private Hyperlink loginLink;
 
+    private static String usernameLoggedin;
     // Service for authentication operations
     private final AuthenticationService authService = new AuthenticationService();
 
@@ -97,6 +98,7 @@ public class AuthController implements Initializable {
                 case SUCCESS:
                     try {
                         App.setRoot("dashboard");
+                        usernameLoggedin = username;
                     } catch (IOException e) {
                         showLoginError("Error loading dashboard page");
                     }
@@ -273,5 +275,9 @@ public class AuthController implements Initializable {
     @FXML
     public void switchToIndex(ActionEvent actionEvent) {
         SceneHandler.switchToIndex();
+    }
+
+    public static String getUsername() {
+        return usernameLoggedin;
     }
 }

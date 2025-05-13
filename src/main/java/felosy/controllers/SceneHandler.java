@@ -63,4 +63,13 @@ public class SceneHandler implements Initializable {
         }
     }
 
+    public static void switchToZakat() {
+        try {
+            App.setRoot("zakat_and_compliance");
+        } catch (IOException e) {
+            System.err.println("Error loading signup view: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 }

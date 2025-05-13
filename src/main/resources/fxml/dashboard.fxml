@@ -13,7 +13,7 @@
    <children>
       <StackPane prefHeight="400.0" prefWidth="600.0">
          <children>
-            <Label alignment="CENTER" prefHeight="86.0" prefWidth="357.0" text="Welcome, Dummy!" StackPane.alignment="TOP_CENTER">
+            <Label fx:id="welcomeMsg_label" alignment="CENTER" prefHeight="86.0" prefWidth="357.0" text="Welcome, Dummy!" StackPane.alignment="TOP_CENTER">
                <font>
                   <Font size="36.0" />
                </font>
@@ -30,7 +30,7 @@
                         <Insets />
                      </VBox.margin>
                   </Button>
-                  <Button fx:id="zakatComp_btn" mnemonicParsing="false" prefHeight="26.0" prefWidth="143.0" text="Zakat and Compliance" />
+                  <Button fx:id="zakatComp_btn" mnemonicParsing="false" onAction="#switchToZakatAndCompliance" prefHeight="26.0" prefWidth="143.0" text="Zakat and Compliance" />
                   <Button fx:id="reports_btn" mnemonicParsing="false" prefHeight="26.0" prefWidth="143.0" text="Reports" />
                   <Button fx:id="logout_btn" mnemonicParsing="false" onAction="#handleLogOutClick" text="Log out" textFill="RED">
                      <VBox.margin>

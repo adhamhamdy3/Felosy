@@ -1,18 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.ZakatAndComplianceController">
    <children>
-      <Hyperlink layoutX="14.0" layoutY="14.0" text="Return to Dashboard" />
-      <Label layoutX="126.0" layoutY="38.0" text="Zakat and Compliance Calculator" textAlignment="CENTER">
+      <Hyperlink fx:id="dashboard_btn" layoutX="14.0" layoutY="14.0" onAction="#switchToDashboard" text="Return to Dashboard" />
+      <Label layoutX="126.0" layoutY="53.0" text="Zakat and Compliance Calculator" textAlignment="CENTER">
          <font>
             <Font size="24.0" />
          </font>
       </Label>
+      <ComboBox fx:id="currency_combobox" layoutX="58.0" layoutY="136.0" prefWidth="150.0" promptText="EGP" />
+      <TextField fx:id="gold_field" layoutX="333.0" layoutY="150.0" />
+      <TextField fx:id="silver_field" layoutX="335.0" layoutY="224.0" />
+      <Label layoutX="300.0" layoutY="154.0" text="Gold" />
+      <Label layoutX="300.0" layoutY="228.0" text="Silver" />
+      <Label layoutX="109.0" layoutY="118.0" text="Currency" />
+      <Button fx:id="calculate_btn" layoutX="101.0" layoutY="282.0" mnemonicParsing="false" text="Calculate" />
+      <Button fx:id="selectAssets_box" layoutX="90.0" layoutY="207.0" mnemonicParsing="false" text="Select Assets" />
+      <Label fx:id="curr_per_gram_label" layoutX="495.0" layoutY="154.0" text="-/ gram" />
+      <Label fx:id="curr_per_silver" layoutX="497.0" layoutY="228.0" text="-/ gram" />
+      <Label fx:id="assetsSelected_label" layoutX="88.0" layoutY="240.0" text="0 assets selected" />
    </children>
 </AnchorPane>

@@ -5,10 +5,12 @@ import javafx.scene.control.Button;
 import javafx.event.ActionEvent;
 import java.io.IOException;
 import felosy.App;
+import javafx.scene.control.Label;
 import javafx.scene.text.Text;
 
 
 public class DashboardController {
+    public Label welcomeMsg_label;
     @FXML
     private Button assetsInvestments_btn;
     @FXML
@@ -32,8 +34,7 @@ public class DashboardController {
 
     @FXML
     public void initialize() {
-        // Initialize any dashboard components here
-        // This method is called automatically when the FXML is loaded
+        welcomeMsg_label.setText("Welcome, " + AuthController.getUsername() + "!");
     }
     @FXML
     public void handleLogOutClick(ActionEvent event) {
@@ -42,5 +43,9 @@ public class DashboardController {
         } catch (IOException e) {
             showLogoutError("Error loading Main page");
         }
+    }
+
+    public void switchToZakatAndCompliance() {
+        SceneHandler.switchToZakat();
     }
 }
