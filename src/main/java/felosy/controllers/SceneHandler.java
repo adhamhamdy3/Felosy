@@ -72,4 +72,12 @@ public class SceneHandler implements Initializable {
         }
     }
 
+    public static void switchToAssetsAndInvestments() {
+        try {
+            App.setRoot("assets_and_investments");
+        } catch (IOException e) {
+            System.err.println("Error loading signup view: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }

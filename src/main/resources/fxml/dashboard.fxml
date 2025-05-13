@@ -25,7 +25,7 @@
                         <Font size="18.0" />
                      </font>
                   </Label>
-                  <Button fx:id="assetsInvestments_btn" mnemonicParsing="false" onAction="#handleAssetsInvestmentsClick" text="Assets and Investments ">
+                  <Button fx:id="assetsInvestments_btn" mnemonicParsing="false" onAction="#switchToAssetsInvestments" text="Assets and Investments ">
                      <VBox.margin>
                         <Insets />
                      </VBox.margin>

@@ -48,4 +48,8 @@ public class DashboardController {
     public void switchToZakatAndCompliance() {
         SceneHandler.switchToZakat();
     }
+
+    public void switchToAssetsInvestments() {
+        SceneHandler.switchToAssetsAndInvestments();
+    }
 }
