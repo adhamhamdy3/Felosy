@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-
+<?import javafx.scene.text.Text?>
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.DashboardController">
    <children>
@@ -25,18 +25,21 @@
                         <Font size="18.0" />
                      </font>
                   </Label>
-                  <Button fx:id="assetsInvestments_btn" mnemonicParsing="false" text="Assets and Investments ">
+                  <Button fx:id="assetsInvestments_btn" mnemonicParsing="false" onAction="#handleAssetsInvestmentsClick" text="Assets and Investments ">
                      <VBox.margin>
                         <Insets />
                      </VBox.margin>
                   </Button>
                   <Button fx:id="zakatComp_btn" mnemonicParsing="false" prefHeight="26.0" prefWidth="143.0" text="Zakat and Compliance" />
                   <Button fx:id="reports_btn" mnemonicParsing="false" prefHeight="26.0" prefWidth="143.0" text="Reports" />
-                  <Button fx:id="logout_btn" mnemonicParsing="false" text="Log out" textFill="RED">
+                  <Button fx:id="logout_btn" mnemonicParsing="false" onAction="#handleLogOutClick" text="Log out" textFill="RED">
                      <VBox.margin>
                         <Insets top="20.0" />
                      </VBox.margin>
                   </Button>
+
+                  <Text fx:id="logoutErrorText" fill="#ff0000" strokeType="OUTSIDE" strokeWidth="0.0" text="log-out Error" textAlignment="CENTER" visible="false" />
+
                </children>
                <StackPane.margin>
                   <Insets top="70.0" />

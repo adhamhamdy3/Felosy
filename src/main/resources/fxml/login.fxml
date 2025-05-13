@@ -10,48 +10,50 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.AuthController">
     <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-        <Button fx:id="return_btn" mnemonicParsing="false" onAction="#switchToIndex" text="Return" StackPane.alignment="TOP_LEFT">
-            <StackPane.margin>
-                <Insets left="20.0" top="20.0" />
-            </StackPane.margin>
-        </Button>
 
-        <VBox alignment="CENTER" maxWidth="250.0" spacing="20.0">
+                                            <VBox alignment="CENTER" maxWidth="355.0" spacing="20.0">
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
+         <Label prefHeight="54.0" prefWidth="330.0" text="Welcome to Felosy!">
+            <font>
+               <Font size="36.0" />
+            </font>
+         </Label>
 
-            <Label id="form_label" alignment="CENTER" text="Login" VBox.vgrow="NEVER">
+                                                   <Label id="form_label" alignment="CENTER" text="Login" VBox.vgrow="NEVER">
                 <font>
-                    <Font size="36.0" />
+                    <Font size="24.0" />
                 </font>
                 <VBox.margin>
                     <Insets bottom="20.0" />
                 </VBox.margin>
             </Label>
 
-            <VBox spacing="5.0">
+                                                <VBox maxWidth="200.0" minWidth="150.0" prefWidth="150.0" spacing="5.0">
                 <Label id="username_label" text="Username" />
-                <TextField id="username_field" fx:id="login_username_field" promptText="Enter your username" />
-            <Label fx:id="login_username_error" prefHeight="18.0" prefWidth="214.0" textFill="RED" />
+                <TextField id="username_field" fx:id="username_field" promptText="Enter your username" />
             </VBox>
 
-            <VBox spacing="5.0">
+                                                <VBox maxWidth="200.0" minWidth="200.0" prefWidth="200.0" spacing="5.0">
                 <Label id="password_label" text="Password" />
-                <PasswordField id="password_field" fx:id="login_password_field" promptText="Enter your password" />
-                <Label fx:id="login_password_error" prefHeight="18.0" prefWidth="324.0" textFill="RED" />
+                <PasswordField id="password_field" fx:id="password_field" accessibleRole="PASSWORD_FIELD" promptText="Enter your password" />
             </VBox>
 
-            <Button id="login_btn" fx:id="login_btn" mnemonicParsing="false" onAction="#handleLogin" text="Login">
+                                             <Text fx:id="loginErrorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" text="password or username is incorrect" visible="false" />
+
+                                    
+                                                <Button id="login_btn" fx:id="login_btn" mnemonicParsing="false" onAction="#handleLogin" text="Login">
                 <VBox.margin>
                     <Insets top="10.0" />
                 </VBox.margin>
             </Button>
 
-            <Hyperlink id="register_btn" onAction="#switchToSignUp" text="Don't have an Account? Register" />
+                                                <Hyperlink id="register_btn" fx:id="signup_btn" onAction="#switchToSignUp" text="Don't have an Account? Register" />
         </VBox>
     </StackPane>
 </AnchorPane>

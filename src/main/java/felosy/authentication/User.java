@@ -17,6 +17,7 @@ public class User implements Serializable {
     private String email;
     private String passwordHash; // Store hashed password
     private double currentWealth; // Added current wealth field
+    private boolean isConfirmed; // Store confirmation status
 
     // Constants for validation
     private static final double MIN_WEALTH = 0.0;
@@ -46,7 +47,20 @@ public class User implements Serializable {
         this.email = email;
         this.passwordHash = hashPassword(password);
         this.currentWealth = currentWealth;
+        this.isConfirmed = false;
     }
+
+    // Return the confirmation status
+    public boolean isConfirmed() {
+        return isConfirmed;
+    }
+
+    // Set the confirmation status
+    public void setConfirmed(boolean confirmed) {
+        isConfirmed = confirmed;
+    }
+
+
 
     /**
      * Basic constructor with default wealth value of 0.0
