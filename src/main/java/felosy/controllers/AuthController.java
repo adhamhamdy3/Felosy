@@ -13,11 +13,7 @@ import felosy.utils.ValidationUtil;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.text.Text;
 
 /**
@@ -27,21 +23,34 @@ import javafx.scene.text.Text;
  */
 public class AuthController implements Initializable {
 
+
     // Login form components
-    @FXML private TextField loginUsernameField;
-    @FXML private PasswordField loginPasswordField;
-    @FXML private Button loginButton;
-    @FXML private Text loginErrorText;
-    @FXML private Hyperlink signupLink;
+    public TextField login_username_field;
+    public Label login_username_error;
+    
+    public TextField login_password_field;
+    public Label login_password_error;
+    
+    // Login error text
+    public Text loginErrorText;
+
 
     // Signup form components
-    @FXML private TextField signupUsernameField;
-    @FXML private PasswordField signupPasswordField;
-    @FXML private PasswordField confirmPasswordField;
-    @FXML private TextField emailField;
-    @FXML private Button signupButton;
-    @FXML private Text signupErrorText;
-    @FXML private Hyperlink loginLink;
+    public TextField signup_username_field;
+    public Label signup_username_error;
+
+    public TextField signup_password_field;
+    public Label signup_password_error;
+
+    public TextField signup_confirmPass_field;
+    public Label signup_confPass_error;
+
+    public TextField signup_email_field;
+    public Label signup_email_error;
+    
+    // Signup error text
+    public Text signupErrorText;
+
 
     // Service for authentication operations
     private final AuthenticationService authService = new AuthenticationService();
@@ -79,8 +88,8 @@ public class AuthController implements Initializable {
 
         try {
             // Validate inputs
-            String username = loginUsernameField.getText().trim();
-            String password = loginPasswordField.getText();
+            String username = login_username_field.getText().trim();
+            String password = login_password_field.getText();
 
             if (username.isEmpty() || password.isEmpty()) {
                 showLoginError("Username and password are required");
@@ -118,10 +127,10 @@ public class AuthController implements Initializable {
 
         try {
             // Get and validate input fields
-            String username = signupUsernameField.getText().trim();
-            String password = signupPasswordField.getText();
-            String confirmPassword = confirmPasswordField.getText();
-            String email = emailField.getText().trim();
+            String username = signup_username_field.getText().trim();
+            String password = signup_password_field.getText();
+            String confirmPassword = signup_confirmPass_field.getText();
+            String email = signup_email_field.getText().trim();
 
             // Validate all fields
             if (!validateSignupFields(username, password, confirmPassword, email)) {
