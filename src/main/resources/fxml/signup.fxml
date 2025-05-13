@@ -66,7 +66,7 @@
                 </padding>
             </Button>
             
-            <Hyperlink id="login_btn" fx:id="login_btn" onAction="#switchToLogin" text="Already have an account? Login" />
+            <Hyperlink id="login_btn" onAction="#switchToLogin" text="Already have an account? Login" />
 
         </VBox>
     </StackPane>

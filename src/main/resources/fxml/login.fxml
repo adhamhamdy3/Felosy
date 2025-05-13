@@ -51,7 +51,7 @@
                 </VBox.margin>
             </Button>
 
-            <Hyperlink id="register_btn" fx:id="signup_btn" onAction="#switchToSignUp" text="Don't have an Account? Register" />
+            <Hyperlink id="register_btn" onAction="#switchToSignUp" text="Don't have an Account? Register" />
         </VBox>
     </StackPane>
 </AnchorPane>

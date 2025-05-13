@@ -80,25 +80,25 @@ public class AuthController implements Initializable {
         // Validate username
         if (!ValidationUtil.isValidUsername(username)) {
             signup_username_error.setText("Username must be 3-50 characters long");
-            isValid = false;
+            return;
         }
         
         // Validate email
         if (!ValidationUtil.isValidEmail(email)) {
             signup_email_error.setText("Please enter a valid email address");
-            isValid = false;
+            return;
         }
         
         // Validate password
         if (!ValidationUtil.isStrongPassword(password)) {
             signup_password_error.setText("Password must be at least 8 characters with uppercase, lowercase, digit, and special character");
-            isValid = false;
+            return;
         }
         
         // Validate password confirmation
         if (!password.equals(confirmPassword)) {
             signup_confPass_error.setText("Passwords do not match");
-            isValid = false;
+            return;
         }
         
         // If validation passes, register the user
@@ -112,12 +112,9 @@ public class AuthController implements Initializable {
                 // Clear form fields
                 clearSignupFields();
                 
-                // Switch to login view
-                try {
-                    switchToLogin(event);
-                } catch (IOException e) {
-                    AlertUtil.showError("Navigation Error: " + e.getMessage());
-                }
+                // Switch to Dashboard view
+                SceneHandler.switchToDashboard();
+
             } else {
                 // Registration failed
                 AlertUtil.showError("Registration Failed: This email may already be registered or there was a system error.");
@@ -144,12 +141,12 @@ public class AuthController implements Initializable {
         
         if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
             login_username_error.setText("Please enter your username or email");
-            isValid = false;
+            return;
         }
         
         if (password == null || password.trim().isEmpty()) {
             login_password_error.setText("Please enter your password");
-            isValid = false;
+            return;
         }
         
         // If validation passes, attempt login
@@ -162,11 +159,8 @@ public class AuthController implements Initializable {
                 AlertUtil.showInformation("Login Successful: Welcome, " + currentUser.getUserName() + "!");
                 
                 // Navigate to main application
-                try {
-                    switchToIndex(event);
-                } catch (IOException e) {
-                    AlertUtil.showError("Navigation Error: " + e.getMessage());
-                }
+                SceneHandler.switchToDashboard();
+
             } else {
                 // Login failed
                 AlertUtil.showError("Login Failed: Invalid username/email or password");
@@ -179,11 +173,7 @@ public class AuthController implements Initializable {
      */
     @FXML
     public void switchToLogin(ActionEvent event) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
-        Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.show();
+        SceneHandler.switchToLogin();
     }
     
     /**
@@ -191,11 +181,23 @@ public class AuthController implements Initializable {
      */
     @FXML
     public void switchToIndex(ActionEvent event) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource("/fxml/index.fxml"));
-        Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.show();
+        SceneHandler.switchToIndex();
+    }
+
+    /**
+     * Switch to the Signup view
+     */
+    @FXML
+    public void switchToSignUp(ActionEvent event) throws IOException {
+        SceneHandler.switchToSignUp();
+    }
+
+    /**
+     * Switch to the Dashboard view
+     */
+    @FXML
+    public void switchToDashboard(ActionEvent event) throws IOException {
+        SceneHandler.switchToDashboard();
     }
     
     /**

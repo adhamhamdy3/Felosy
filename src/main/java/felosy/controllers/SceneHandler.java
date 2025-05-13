@@ -54,4 +54,13 @@ public class SceneHandler implements Initializable {
         }
     }
 
+    public static void switchToDashboard() {
+        try {
+            App.setRoot("dashboard");
+        } catch (IOException e) {
+            System.err.println("Error loading signup view: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 }
