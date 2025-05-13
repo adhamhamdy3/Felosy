@@ -8,39 +8,39 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-/**
- * JavaFX App
- */
 public class App extends Application {
 
-    private static Scene scene;
+    private static Stage primaryStage;
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("index"), 640, 480);
+        primaryStage = stage;
+        Parent root = loadFXML("index");
+        Scene scene = new Scene(root);
         stage.setScene(scene);
+        stage.setTitle("Felosy");
+        stage.setResizable(true);
         stage.show();
     }
 
     public static void setRoot(String fxml) throws IOException {
-        scene.setRoot(loadFXML(fxml));
+        Parent root = loadFXML(fxml);
+        Scene scene = primaryStage.getScene();
+        scene.setRoot(root);
+        // Optional: auto size based on new root
+        primaryStage.sizeToScene();
     }
 
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("/fxml/" + fxml + ".fxml"));
-
-        // Add debug information
         if (fxmlLoader.getLocation() == null) {
             System.err.println("Could not find FXML file: /fxml/" + fxml + ".fxml");
-            // List available resources to help debug
             System.err.println("Class path: " + App.class.getProtectionDomain().getCodeSource().getLocation());
         }
-
         return fxmlLoader.load();
     }
-    
+
     public static void main(String[] args) {
         launch();
     }
-
 }
