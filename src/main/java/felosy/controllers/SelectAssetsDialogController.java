@@ -55,6 +55,11 @@ public class SelectAssetsDialogController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Ensure selectAllCheckBox is unchecked by default
+        selectAllCheckBox.setSelected(false);
+        // Make table and select column editable
+        assetsTableView.setEditable(true);
+        selectColumn.setEditable(true);
         // Checkbox column
         selectColumn.setCellValueFactory(cellData -> {
             Asset asset = cellData.getValue();
@@ -138,7 +143,12 @@ public class SelectAssetsDialogController implements Initializable {
     private boolean isHawlDatePassed(Asset asset) {
         Date purchaseDate = asset.getPurchaseDate();
         if (purchaseDate == null) return false;
-        LocalDate hawlDate = purchaseDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate hawlDate;
+        if (purchaseDate instanceof java.sql.Date) {
+            hawlDate = ((java.sql.Date) purchaseDate).toLocalDate();
+        } else {
+            hawlDate = purchaseDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        }
         return hawlDate.isBefore(LocalDate.now().minusDays(354));
     }
 
@@ -168,6 +178,12 @@ public class SelectAssetsDialogController implements Initializable {
         assetsTableView.setItems(this.assetList);
         // Reset selection map for new assets
         selectionMap.clear();
+        // Ensure all checkboxes are unchecked
+        for (Asset asset : assetList) {
+            selectionMap.put(asset, new SimpleBooleanProperty(false));
+        }
+        selectAllCheckBox.setSelected(false);
+        selectAllCheckBox.setIndeterminate(false);
         updateSelectAllCheckBox();
     }
 

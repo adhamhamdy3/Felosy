@@ -1,8 +1,6 @@
 package felosy.controllers;
 
 import felosy.assetmanagement.Gold;
-import felosy.assetmanagement.Portfolio;
-import felosy.storage.DataStorage;
 import felosy.services.GoldDataService;
 import felosy.services.CryptoDataService;
 import felosy.services.RealEstateDataService;
@@ -15,33 +13,26 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Controller for managing different types of assets (Gold, Cryptocurrency, Real Estate, Stock)
  * Provides UI functionality for viewing, adding, editing, and deleting assets
  */
-public class AssetsController {
+public class GoldController {
     // Top section
     @FXML private RadioButton radio_gold;
     @FXML private RadioButton radio_crypto;

@@ -7,6 +7,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -24,6 +25,8 @@ import javafx.collections.ObservableList;
 public class ZakatAndComplianceController implements Initializable {
     @FXML
     private Button selectAssets_box;
+    @FXML
+    private Label assetsSelected_label;
 
     /**
      * @param location  The location used to resolve relative paths for the root object, or
@@ -80,9 +83,17 @@ public class ZakatAndComplianceController implements Initializable {
 
             dialogStage.showAndWait(); // Show dialog and wait for it to be closed
 
+            // After dialog closes, update the label with the number of selected assets
+            int selectedCount = dialogController.getSelectedAssets().size();
+            updateAssetsSelectedLabel(selectedCount);
+
         } catch (IOException e) {
             e.printStackTrace();
             // Handle exception (e.g., show an error alert)
         }
+    }
+
+    private void updateAssetsSelectedLabel(int count) {
+        assetsSelected_label.setText(count + " assets selected");
     }
 }

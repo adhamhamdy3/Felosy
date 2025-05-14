@@ -26,7 +26,6 @@ module felosy {
     exports felosy.reporting;
     exports felosy.storage;
     exports felosy.utils;
-    exports felosy.integration;
     exports felosy.controllers;
     opens felosy.controllers to javafx.fxml;
 
