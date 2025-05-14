@@ -4,9 +4,11 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -28,21 +30,26 @@
                 </Label>
                 <HBox>
                     <children>
-                        <Button fx:id="btn_gold" mnemonicParsing="false" text="Gold">
+                        <RadioButton fx:id="radio_gold" mnemonicParsing="false" text="Gold">
                             <HBox.margin>
                                 <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
                             </HBox.margin>
-                        </Button>
-                        <Button fx:id="btn_crypto" mnemonicParsing="false" text="Cryptocurrency">
+                        </RadioButton>
+                        <RadioButton fx:id="radio_crypto" mnemonicParsing="false" text="Cryptocurrency">
                             <HBox.margin>
                                 <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
                             </HBox.margin>
-                        </Button>
-                        <Button fx:id="btn_Stock" mnemonicParsing="false" text="Stock">
+                        </RadioButton>
+                        <RadioButton fx:id="radio_realEstate" mnemonicParsing="false" selected="true" text="Real Estate">
                             <HBox.margin>
                                 <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
                             </HBox.margin>
-                        </Button>
+                        </RadioButton>
+                        <RadioButton fx:id="radio_Stock" mnemonicParsing="false" text="Stock">
+                            <HBox.margin>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                            </HBox.margin>
+                        </RadioButton>
                         <Region HBox.hgrow="ALWAYS" />
                         <Text fx:id="errorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" text="Error" visible="false">
                             <HBox.margin>

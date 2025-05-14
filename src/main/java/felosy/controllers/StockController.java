@@ -8,6 +8,8 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.text.Text;
 import felosy.assetmanagement.TickerType;
@@ -40,14 +42,16 @@ public class StockController implements Initializable {
     @FXML private TextField txt_eps;
     @FXML private Text errorText;
 
+    @FXML private RadioButton radio_gold;
+    @FXML private RadioButton radio_crypto;
+    @FXML private RadioButton radio_realEstate;
+    @FXML private RadioButton radio_Stock;
     @FXML private Button btn_add;
     @FXML private Button btn_buy;
     @FXML private Button btn_sell;
     @FXML private Button btn_delete;
     @FXML private Button btn_back;
-    @FXML private Button btn_gold;
-    @FXML private Button btn_crypto;
-    @FXML private Button btn_realEstate;
+    private ToggleGroup assetTypeGroup;
 
     private StockDataService stockDataService = StockDataService.getInstance();
     private String currentUserId;
@@ -100,9 +104,29 @@ public class StockController implements Initializable {
     }
 
     private void setupButtons() {
-        btn_gold.setOnAction(e -> switchToGold());
-        btn_crypto.setOnAction(e -> switchToCrypto());
-        btn_realEstate.setOnAction(e -> switchToRealEstate());
+        btn_add.setOnAction(e -> handleAddStock());
+        btn_buy.setOnAction(e -> handleBuyShares());
+        btn_sell.setOnAction(e -> handleSellShares());
+        btn_back.setOnAction(e -> handleBack());
+        
+        // Setup radio buttons with toggle group
+        assetTypeGroup = new ToggleGroup();
+        radio_gold.setToggleGroup(assetTypeGroup);
+        radio_crypto.setToggleGroup(assetTypeGroup);
+        radio_realEstate.setToggleGroup(assetTypeGroup);
+        radio_Stock.setToggleGroup(assetTypeGroup);
+        radio_Stock.setSelected(true);
+        
+        // Add listener to handle navigation when radio selection changes
+        assetTypeGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == radio_gold) {
+                switchToGold();
+            } else if (newVal == radio_crypto) {
+                switchToCrypto();
+            } else if (newVal == radio_realEstate) {
+                switchToRealEstate();
+            }
+        });
     }
 
     private String generateEightDigitId() {

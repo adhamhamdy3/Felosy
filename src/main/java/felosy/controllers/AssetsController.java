@@ -8,6 +8,8 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.text.Text;
 
@@ -26,12 +28,14 @@ public class AssetsController implements Initializable {
     @FXML private TableColumn<Gold, BigDecimal> purityColumn;
     @FXML private TableColumn<Gold, BigDecimal> priceColumn;
 
-    @FXML private Button btn_Stock;
+    @FXML private RadioButton radio_gold;
+    @FXML private RadioButton radio_crypto;
+    @FXML private RadioButton radio_realEstate;
+    @FXML private RadioButton radio_Stock;
     @FXML private Button btn_add;
     @FXML private Button btn_back;
-    @FXML private Button btn_crypto;
     @FXML private Button btn_delete;
-    @FXML private Button btn_realEstate;
+    private ToggleGroup assetTypeGroup;
     @FXML private TextField txt_grams;
     @FXML private TextField txt_name;
     @FXML private TextField txt_purity;
@@ -75,9 +79,25 @@ public class AssetsController implements Initializable {
         btn_add.setOnAction(e -> handleAddGold());
         btn_delete.setOnAction(e -> handleDeleteGold());
         btn_back.setOnAction(e -> handleBack());
-        btn_crypto.setOnAction(e -> handleCrypto());
-        btn_realEstate.setOnAction(e -> handleRealState());
-        btn_Stock.setOnAction(e -> handleStock());
+        
+        // Setup radio buttons with toggle group
+        assetTypeGroup = new ToggleGroup();
+        radio_gold.setToggleGroup(assetTypeGroup);
+        radio_crypto.setToggleGroup(assetTypeGroup);
+        radio_realEstate.setToggleGroup(assetTypeGroup);
+        radio_Stock.setToggleGroup(assetTypeGroup);
+        radio_gold.setSelected(true);
+        
+        // Add listener to handle navigation when radio selection changes
+        assetTypeGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == radio_crypto) {
+                SceneHandler.switchToCrypto();
+            } else if (newVal == radio_realEstate) {
+                SceneHandler.switchToRealEstate();
+            } else if (newVal == radio_Stock) {
+                SceneHandler.switchToStock();
+            }
+        });
     }
 
     private String generateEightDigitId() {
