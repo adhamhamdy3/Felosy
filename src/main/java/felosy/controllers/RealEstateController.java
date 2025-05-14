@@ -3,6 +3,12 @@ package felosy.controllers;
 import felosy.App;
 import felosy.assetmanagement.RealEstate;
 import felosy.services.RealEstateDataService;
+import felosy.services.GoldDataService;
+import felosy.services.CryptoDataService;
+import felosy.services.StockDataService;
+import felosy.assetmanagement.Gold;
+import felosy.assetmanagement.Cryptocurrency;
+import felosy.assetmanagement.Stock;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -25,6 +31,7 @@ import java.util.ResourceBundle;
 import java.util.Arrays;
 import java.util.List;
 import java.text.SimpleDateFormat;
+import java.text.NumberFormat;
 
 public class RealEstateController implements Initializable {
 
@@ -52,10 +59,15 @@ public class RealEstateController implements Initializable {
     @FXML private RadioButton radio_Stock;
     @FXML private Button btn_add;
     @FXML private Button btn_back;
+    @FXML private Label netWorthLabel;
+    @FXML private Label totalInvestedLabel;
     @FXML
     private ToggleGroup assetTypeGroup;
 
     private RealEstateDataService realEstateDataService = RealEstateDataService.getInstance();
+    private GoldDataService goldDataService = GoldDataService.getInstance();
+    private CryptoDataService cryptoDataService = CryptoDataService.getInstance();
+    private StockDataService stockDataService = StockDataService.getInstance();
     private String currentUserId;
     private ObservableList<RealEstate> realEstateList;
 
@@ -68,6 +80,7 @@ public class RealEstateController implements Initializable {
         setupButtons();
 
         realEstateTable.setItems(realEstateList);
+        updateSummaryLabels();
     }
 
 
@@ -275,6 +288,7 @@ public class RealEstateController implements Initializable {
         result.ifPresent(newProperty -> {
             realEstateList.add(newProperty);
             realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
+            updateSummaryLabels();
         });
     }
 
@@ -379,6 +393,7 @@ public class RealEstateController implements Initializable {
         result.ifPresent(updatedPropertyType -> {
             realEstateTable.refresh();
             realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
+            updateSummaryLabels();
         });
     }
 
@@ -394,6 +409,7 @@ public class RealEstateController implements Initializable {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             realEstateList.remove(propertyToDelete);
             realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
+            updateSummaryLabels();
         }
     }
 
@@ -425,5 +441,48 @@ public class RealEstateController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    private void updateSummaryLabels() {
+        BigDecimal totalNetWorth = BigDecimal.ZERO;
+        BigDecimal totalInvestedInRealEstate = BigDecimal.ZERO;
+
+        for (RealEstate property : realEstateList) {
+            if (property.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(property.getCurrentValue());
+            }
+            if (property.getPurchasePrice() != null) {
+                totalInvestedInRealEstate = totalInvestedInRealEstate.add(property.getPurchasePrice());
+            }
+        }
+
+        ObservableList<Gold> goldList = goldDataService.getUserGoldList(currentUserId);
+        for (Gold gold : goldList) {
+            if (gold.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(gold.getCurrentValue());
+            }
+        }
+
+        ObservableList<Cryptocurrency> cryptoList = cryptoDataService.getUserCryptoList(currentUserId);
+        for (Cryptocurrency crypto : cryptoList) {
+            if (crypto.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(crypto.getCurrentValue());
+            }
+        }
+
+        ObservableList<Stock> stockList = stockDataService.getUserStockList(currentUserId);
+        for (Stock stock : stockList) {
+            if (stock.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(stock.getCurrentValue());
+            }
+        }
+
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance();
+        if (netWorthLabel != null) {
+            netWorthLabel.setText(currencyFormatter.format(totalNetWorth));
+        }
+        if (totalInvestedLabel != null) {
+            totalInvestedLabel.setText(currencyFormatter.format(totalInvestedInRealEstate));
+        }
     }
 }

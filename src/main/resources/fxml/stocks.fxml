@@ -2,12 +2,10 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -16,13 +14,13 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1150.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.StockController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1150.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.StocksController">
     <top>
         <VBox BorderPane.alignment="CENTER">
             <children>
-                <Label text="Assets Management (Stocks)">
+                <Label text="Stocks">
                     <font>
-                        <Font size="20.0" />
+                        <Font name="System Bold" size="20.0" />
                     </font>
                     <VBox.margin>
                         <Insets bottom="10.0" left="30.0" top="15.0" />
@@ -31,15 +29,18 @@
                 <HBox alignment="CENTER_LEFT">
                     <children>
                         <fx:define>
-                            <ToggleGroup fx:id="assetTypeGroup" />
+                            <ToggleGroup fx:id="$assetTypeGroup" />
                         </fx:define>
-                        <RadioButton fx:id="radio_gold" mnemonicParsing="false" text="Gold" toggleGroup="$assetTypeGroup">
+                        <RadioButton fx:id="radio_gold" mnemonicParsing="false" text="Gold">
                             <HBox.margin>
                                 <Insets bottom="8.0" left="30.0" right="15.0" top="8.0" />
                             </HBox.margin>
                             <font>
                                 <Font size="14.0" />
                             </font>
+                     <toggleGroup>
+                        <ToggleGroup fx:id="assetTypeGroup" />
+                     </toggleGroup>
                         </RadioButton>
                         <RadioButton fx:id="radio_crypto" mnemonicParsing="false" text="Cryptocurrency" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
@@ -57,7 +58,7 @@
                                 <Font size="14.0" />
                             </font>
                         </RadioButton>
-                        <RadioButton fx:id="radio_Stock" mnemonicParsing="false" selected="true" text="Stock" toggleGroup="$assetTypeGroup">
+                        <RadioButton fx:id="radio_Stock" mnemonicParsing="false" selected="true" text="Stocks" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
                                 <Insets bottom="8.0" right="15.0" top="8.0" />
                             </HBox.margin>
@@ -74,7 +75,7 @@
                                 <Font size="14.0" />
                             </font>
                         </Text>
-                        <Button fx:id="btn_back" mnemonicParsing="false" onAction="#handleBack" text="Back to Main">
+                        <Button fx:id="btn_back" mnemonicParsing="false" onAction="#handleBack" text="Return to Dashboard">
                             <HBox.margin>
                                 <Insets bottom="8.0" right="30.0" top="8.0" />
                             </HBox.margin>
@@ -134,6 +135,36 @@
                         <Font size="14.0" />
                     </font>
                 </Button>
+                <Region HBox.hgrow="ALWAYS" />
+                <Label text="Net Worth:">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                    <HBox.margin>
+                        <Insets right="5.0" />
+                    </HBox.margin>
+                </Label>
+                <Label fx:id="netWorthLabel" text="\$0.00">
+                    <font>
+                        <Font name="System Bold" size="14.0" />
+                    </font>
+                    <HBox.margin>
+                        <Insets right="20.0" />
+                    </HBox.margin>
+                </Label>
+                <Label text="Total Invested:">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                    <HBox.margin>
+                        <Insets right="5.0" />
+                    </HBox.margin>
+                </Label>
+                <Label fx:id="totalInvestedLabel" text="\$0.00">
+                    <font>
+                        <Font name="System Bold" size="14.0" />
+                    </font>
+                </Label>
             </children>
             <padding>
                 <Insets bottom="15.0" left="30.0" right="30.0" top="5.0" />

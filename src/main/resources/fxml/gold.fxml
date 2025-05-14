@@ -6,7 +6,6 @@
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -14,15 +13,14 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
-<?import javafx.scene.control.DatePicker?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.AssetsController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1150.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.AssetsController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
-            <Label text="Assets Management (Gold)">
+            <Label text="Gold">
                <font>
-                  <Font size="20.0" />
+                  <Font name="System Bold" size="20.0" />
                </font>
                <VBox.margin>
                   <Insets bottom="10.0" left="30.0" top="15.0" />
@@ -60,7 +58,7 @@
                         <Font size="14.0" />
                      </font>
                   </RadioButton>
-                  <RadioButton fx:id="radio_Stock" mnemonicParsing="false" onAction="#switchToStock" text="Stock" toggleGroup="$assetTypeGroup">
+                  <RadioButton fx:id="radio_Stock" mnemonicParsing="false" onAction="#switchToStock" text="Stocks" toggleGroup="$assetTypeGroup">
                      <HBox.margin>
                         <Insets bottom="8.0" right="15.0" top="8.0" />
                      </HBox.margin>
@@ -77,7 +75,7 @@
                         <Font size="14.0" />
                      </font>
                   </Text>
-                  <Button fx:id="btn_back" mnemonicParsing="false" onAction="#handleBack" text="Back to Main">
+                  <Button fx:id="btn_back" mnemonicParsing="false" onAction="#handleBack" text="Return to Dashboard">
                      <HBox.margin>
                         <Insets bottom="8.0" right="30.0" top="8.0" />
                      </HBox.margin>
@@ -91,7 +89,7 @@
       </VBox>
    </top>
    <center>
-      <TableView fx:id="goldTable" VBox.vgrow="ALWAYS" BorderPane.alignment="CENTER">
+      <TableView fx:id="goldTable" BorderPane.alignment="CENTER" VBox.vgrow="ALWAYS">
          <columns>
             <TableColumn fx:id="idColumn" prefWidth="80.0" text="ID" />
             <TableColumn fx:id="nameColumn" prefWidth="120.0" text="Name" />
@@ -117,6 +115,36 @@
                         <Font size="14.0" />
                      </font>
                   </Button>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label text="Net Worth:">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin>
+                  </Label>
+                  <Label fx:id="netWorthLabel" text="\$0.00">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="20.0" />
+                     </HBox.margin>
+                  </Label>
+                  <Label text="Total Invested:">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin>
+                  </Label>
+                  <Label fx:id="totalInvestedLabel" text="\$0.00">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Label>
                </children>
                <VBox.margin>
                   <Insets />

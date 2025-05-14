@@ -35,6 +35,7 @@ public class App extends Application {
         stage.setScene(scene);
         stage.setTitle("Felosy");
         stage.setResizable(true);
+        stage.centerOnScreen();
         stage.show();
     }
 
@@ -44,6 +45,7 @@ public class App extends Application {
         scene.setRoot(root);
         // Optional: auto size based on new root
         primaryStage.sizeToScene();
+        primaryStage.centerOnScreen();
     }
 
     private static Parent loadFXML(String fxml) throws IOException {

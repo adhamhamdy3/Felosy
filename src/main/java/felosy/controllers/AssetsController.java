@@ -4,6 +4,12 @@ import felosy.assetmanagement.Gold;
 import felosy.assetmanagement.Portfolio;
 import felosy.storage.DataStorage;
 import felosy.services.GoldDataService;
+import felosy.services.CryptoDataService;
+import felosy.services.RealEstateDataService;
+import felosy.services.StockDataService;
+import felosy.assetmanagement.Cryptocurrency;
+import felosy.assetmanagement.RealEstate;
+import felosy.assetmanagement.Stock;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,6 +28,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -62,6 +69,8 @@ public class AssetsController {
     @FXML private TextField txt_purchasePrice;
     @FXML private DatePicker date_purchase;
     @FXML private Button btn_add;
+    @FXML private Label netWorthLabel;
+    @FXML private Label totalInvestedLabel;
 
     // Data model
     private ObservableList<Gold> goldItems = FXCollections.observableArrayList();
@@ -71,6 +80,11 @@ public class AssetsController {
 
     // Default current user ID (would be set from login)
     private String currentUserId = "default-user";
+
+    // Data services for other asset types
+    private CryptoDataService cryptoDataService = CryptoDataService.getInstance();
+    private RealEstateDataService realEstateDataService = RealEstateDataService.getInstance();
+    private StockDataService stockDataService = StockDataService.getInstance();
 
     @FXML
     public void initialize() {
@@ -85,6 +99,7 @@ public class AssetsController {
 
         // Load gold data from storage
         loadGoldDataFromStorage();
+        updateSummaryLabels();
     }
 
     /**
@@ -95,6 +110,7 @@ public class AssetsController {
     public void setCurrentPortfolioId(String portfolioId) {
         this.currentPortfolioId = portfolioId;
         loadGoldDataFromStorage();
+        updateSummaryLabels();
     }
 
     /**
@@ -106,6 +122,7 @@ public class AssetsController {
         this.currentUserId = userId;
         // Reload data for the new user
         loadGoldDataFromStorage();
+        updateSummaryLabels();
     }
 
     /**
@@ -308,6 +325,7 @@ public class AssetsController {
                 goldItems.add(newGold);
                 saveGoldDataToStorage();
                 hideError();
+                updateSummaryLabels();
             }
         } catch (NumberFormatException e) {
             showError("Invalid number format");
@@ -333,6 +351,7 @@ public class AssetsController {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             goldItems.remove(gold);
             saveGoldDataToStorage();
+            updateSummaryLabels();
         }
     }
 
@@ -416,6 +435,7 @@ public class AssetsController {
 
                 // Save changes to storage
                 saveGoldDataToStorage();
+                updateSummaryLabels();
 
             } catch (NumberFormatException e) {
                 showError("Invalid number format");
@@ -464,6 +484,7 @@ public class AssetsController {
             // Get the user's gold list from the service
             ObservableList<Gold> userGoldList = GoldDataService.getInstance().getUserGoldList(currentUserId);
             goldItems.addAll(userGoldList);
+            updateSummaryLabels();
         } catch (Exception e) {
             showError("Failed to load gold data: " + e.getMessage());
             e.printStackTrace();
@@ -549,6 +570,62 @@ public class AssetsController {
             SceneHandler.switchToStock();
         } catch (Exception e) {
             showError("Failed to switch to stock view: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Calculates and updates the net worth and total invested labels.
+     */
+    private void updateSummaryLabels() {
+        BigDecimal totalNetWorth = BigDecimal.ZERO;
+        BigDecimal totalInvestedInGold = BigDecimal.ZERO;
+
+        // Calculate Gold net worth and total invested in Gold
+        for (Gold gold : goldItems) {
+            if (gold.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(gold.getCurrentValue());
+            }
+            if (gold.getPurchasePrice() != null) {
+                totalInvestedInGold = totalInvestedInGold.add(gold.getPurchasePrice());
+            }
+        }
+
+        // Add Crypto net worth
+        ObservableList<Cryptocurrency> cryptoList = cryptoDataService.getUserCryptoList(currentUserId);
+        if (cryptoList != null) {
+            for (Cryptocurrency crypto : cryptoList) {
+                if (crypto.getCurrentValue() != null) {
+                    totalNetWorth = totalNetWorth.add(crypto.getCurrentValue());
+                }
+            }
+        }
+
+        // Add Real Estate net worth
+        ObservableList<RealEstate> realEstateList = realEstateDataService.getUserRealEstateList(currentUserId);
+        if (realEstateList != null) {
+            for (RealEstate property : realEstateList) {
+                if (property.getCurrentValue() != null) {
+                    totalNetWorth = totalNetWorth.add(property.getCurrentValue());
+                }
+            }
+        }
+
+        // Add Stock net worth
+        ObservableList<Stock> stockList = stockDataService.getUserStockList(currentUserId);
+        if (stockList != null) {
+            for (Stock stock : stockList) {
+                if (stock.getCurrentValue() != null) {
+                    totalNetWorth = totalNetWorth.add(stock.getCurrentValue());
+                }
+            }
+        }
+
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance();
+        if (netWorthLabel != null) {
+            netWorthLabel.setText(currencyFormatter.format(totalNetWorth));
+        }
+        if (totalInvestedLabel != null) {
+            totalInvestedLabel.setText(currencyFormatter.format(totalInvestedInGold));
         }
     }
 }

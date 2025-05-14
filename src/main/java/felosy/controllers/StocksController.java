@@ -3,6 +3,12 @@ package felosy.controllers;
 import felosy.App;
 import felosy.assetmanagement.Stock;
 import felosy.services.StockDataService;
+import felosy.services.GoldDataService;
+import felosy.services.CryptoDataService;
+import felosy.services.RealEstateDataService;
+import felosy.assetmanagement.Gold;
+import felosy.assetmanagement.Cryptocurrency;
+import felosy.assetmanagement.RealEstate;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,14 +20,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.text.Text;
 import felosy.assetmanagement.TickerType;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Date;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
@@ -29,8 +33,9 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.geometry.Insets;
 import javafx.scene.layout.HBox;
+import java.text.NumberFormat;
 
-public class StockController implements Initializable {
+public class StocksController implements Initializable {
 
     // Helper record to hold data from the add/edit stock dialog
     private record StockDialogData(String name, TickerType ticker, String exchange, int shares, BigDecimal pricePerShare, BigDecimal dividendYield, BigDecimal eps) {}
@@ -58,10 +63,15 @@ public class StockController implements Initializable {
     @FXML private Button btn_sell;
     @FXML private Button btn_delete;
     @FXML private Button btn_back;
+    @FXML private Label netWorthLabel;
+    @FXML private Label totalInvestedLabel;
     @FXML
     private ToggleGroup assetTypeGroup;
 
     private StockDataService stockDataService = StockDataService.getInstance();
+    private GoldDataService goldDataService = GoldDataService.getInstance();
+    private CryptoDataService cryptoDataService = CryptoDataService.getInstance();
+    private RealEstateDataService realEstateDataService = RealEstateDataService.getInstance();
     private String currentUserId;
     private ObservableList<Stock> stockList;
 
@@ -83,6 +93,7 @@ public class StockController implements Initializable {
 
         stockTable.setItems(stockList);
         setupActionsColumn();
+        updateSummaryLabels();
     }
 
 
@@ -299,6 +310,7 @@ public class StockController implements Initializable {
                 stockList.add(newStock);
                 stockDataService.saveUserStockList(currentUserId, stockList);
                 stockTable.refresh();
+                updateSummaryLabels();
             } catch (IllegalArgumentException e) {
                 showAlert("Error Adding Stock", e.getMessage());
             }
@@ -367,6 +379,7 @@ public class StockController implements Initializable {
                 selectedStock.buyShares(data.shares(), data.pricePerShare());
                 stockTable.refresh();
                 stockDataService.saveUserStockList(currentUserId, stockList);
+                updateSummaryLabels();
             } catch (IllegalArgumentException e) {
                 showAlert("Error Buying Shares", e.getMessage());
             }
@@ -389,6 +402,7 @@ public class StockController implements Initializable {
                 stockTable.refresh();
                 stockDataService.saveUserStockList(currentUserId, stockList);
                 showAlert("Success", "Shares sold. Profit/Loss: " + profit.setScale(2, BigDecimal.ROUND_HALF_UP));
+                updateSummaryLabels();
             } catch (IllegalArgumentException e) {
                 showAlert("Error Selling Shares", e.getMessage());
             }
@@ -456,6 +470,7 @@ public class StockController implements Initializable {
 
                 stockTable.refresh();
                 stockDataService.saveUserStockList(currentUserId, stockList);
+                updateSummaryLabels();
             } catch (IllegalArgumentException e) {
                 showAlert("Error Editing Stock", e.getMessage());
             }
@@ -474,9 +489,61 @@ public class StockController implements Initializable {
                 stockList.remove(stockToDelete);
                 stockDataService.saveUserStockList(currentUserId, stockList);
                 stockTable.refresh();
+                updateSummaryLabels();
             }
         } else {
             showAlert("Error", "No stock selected for deletion.");
+        }
+    }
+
+    private void updateSummaryLabels() {
+        BigDecimal totalNetWorth = BigDecimal.ZERO;
+        BigDecimal totalInvestedInStocks = BigDecimal.ZERO;
+
+        if (stockList != null) {
+            for (Stock stock : stockList) {
+                if (stock.getCurrentValue() != null) {
+                    totalNetWorth = totalNetWorth.add(stock.getCurrentValue());
+                }
+                if (stock.getPurchasePrice() != null) {
+                    totalInvestedInStocks = totalInvestedInStocks.add(stock.getPurchasePrice());
+                }
+            }
+        }
+
+        ObservableList<Gold> goldList = goldDataService.getUserGoldList(currentUserId);
+        if (goldList != null) {
+            for (Gold gold : goldList) {
+                if (gold.getCurrentValue() != null) {
+                    totalNetWorth = totalNetWorth.add(gold.getCurrentValue());
+                }
+            }
+        }
+
+        ObservableList<Cryptocurrency> cryptoList = cryptoDataService.getUserCryptoList(currentUserId);
+        if (cryptoList != null) {
+            for (Cryptocurrency crypto : cryptoList) {
+                if (crypto.getCurrentValue() != null) {
+                    totalNetWorth = totalNetWorth.add(crypto.getCurrentValue());
+                }
+            }
+        }
+
+        ObservableList<RealEstate> realEstateList = realEstateDataService.getUserRealEstateList(currentUserId);
+        if (realEstateList != null) {
+            for (RealEstate property : realEstateList) {
+                if (property.getCurrentValue() != null) {
+                    totalNetWorth = totalNetWorth.add(property.getCurrentValue());
+                }
+            }
+        }
+
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance();
+        if (netWorthLabel != null) {
+            netWorthLabel.setText(currencyFormatter.format(totalNetWorth));
+        }
+        if (totalInvestedLabel != null) {
+            totalInvestedLabel.setText(currencyFormatter.format(totalInvestedInStocks));
         }
     }
 }

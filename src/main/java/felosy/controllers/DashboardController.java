@@ -35,6 +35,11 @@ public class DashboardController {
     @FXML
     public void initialize() {
         //welcomeMsg_label.setText("Welcome, " + AuthController.getUsername() + "!");
+        if (App.getCurrentUser() != null) {
+            welcomeMsg_label.setText("Welcome, " + App.getCurrentUser().getUserName() + "!");
+        } else {
+            welcomeMsg_label.setText("Welcome!"); // Fallback if user is somehow null
+        }
     }
     @FXML
     public void handleLogOutClick(ActionEvent event) {

@@ -10,22 +10,22 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.ZakatAndComplianceController">
    <children>
-      <Hyperlink fx:id="dashboard_btn" layoutX="14.0" layoutY="14.0" onAction="#switchToDashboard" text="Return to Dashboard" />
-      <Label layoutX="126.0" layoutY="53.0" text="Zakat and Compliance Calculator" textAlignment="CENTER">
+      <Hyperlink fx:id="dashboard_btn" onAction="#switchToDashboard" text="Return to Dashboard" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0" />
+      <Label text="Zakat and Compliance Calculator" textAlignment="CENTER" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="53.0">
          <font>
             <Font size="24.0" />
          </font>
       </Label>
-      <ComboBox fx:id="currency_combobox" layoutX="58.0" layoutY="136.0" prefWidth="150.0" promptText="EGP" />
-      <TextField fx:id="gold_field" layoutX="333.0" layoutY="150.0" />
-      <TextField fx:id="silver_field" layoutX="335.0" layoutY="224.0" />
-      <Label layoutX="300.0" layoutY="154.0" text="Gold" />
-      <Label layoutX="300.0" layoutY="228.0" text="Silver" />
-      <Label layoutX="109.0" layoutY="118.0" text="Currency" />
-      <Button fx:id="calculate_btn" layoutX="101.0" layoutY="282.0" mnemonicParsing="false" text="Calculate" />
-      <Button fx:id="selectAssets_box" layoutX="90.0" layoutY="207.0" mnemonicParsing="false" text="Select Assets" />
-      <Label fx:id="curr_per_gram_label" layoutX="495.0" layoutY="154.0" text="-/ gram" />
-      <Label fx:id="curr_per_silver" layoutX="497.0" layoutY="228.0" text="-/ gram" />
-      <Label fx:id="assetsSelected_label" layoutX="88.0" layoutY="240.0" text="0 assets selected" />
+      <ComboBox fx:id="currency_combobox" prefWidth="150.0" promptText="EGP" AnchorPane.leftAnchor="58.0" AnchorPane.topAnchor="136.0" />
+      <TextField fx:id="gold_field" AnchorPane.leftAnchor="333.0" AnchorPane.topAnchor="150.0" AnchorPane.rightAnchor="120.0" />
+      <TextField fx:id="silver_field" AnchorPane.leftAnchor="335.0" AnchorPane.topAnchor="224.0" AnchorPane.rightAnchor="120.0" />
+      <Label text="Gold" AnchorPane.leftAnchor="300.0" AnchorPane.topAnchor="154.0" />
+      <Label text="Silver" AnchorPane.leftAnchor="300.0" AnchorPane.topAnchor="228.0" />
+      <Label text="Currency" AnchorPane.leftAnchor="109.0" AnchorPane.topAnchor="118.0" />
+      <Button fx:id="calculate_btn" mnemonicParsing="false" text="Calculate" AnchorPane.leftAnchor="101.0" AnchorPane.topAnchor="282.0" />
+      <Button fx:id="selectAssets_box" mnemonicParsing="false" text="Select Assets" AnchorPane.leftAnchor="90.0" AnchorPane.topAnchor="207.0" />
+      <Label fx:id="curr_per_gram_label" text="-/ gram" AnchorPane.topAnchor="154.0" AnchorPane.rightAnchor="55.0" />
+      <Label fx:id="curr_per_silver" text="-/ gram" AnchorPane.topAnchor="228.0" AnchorPane.rightAnchor="55.0" />
+      <Label fx:id="assetsSelected_label" text="0 assets selected" AnchorPane.leftAnchor="88.0" AnchorPane.topAnchor="240.0" />
    </children>
 </AnchorPane>

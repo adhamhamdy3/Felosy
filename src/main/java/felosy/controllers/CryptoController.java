@@ -3,6 +3,12 @@ package felosy.controllers;
 import felosy.App;
 import felosy.assetmanagement.Cryptocurrency;
 import felosy.services.CryptoDataService;
+import felosy.services.GoldDataService;
+import felosy.services.RealEstateDataService;
+import felosy.services.StockDataService;
+import felosy.assetmanagement.Gold;
+import felosy.assetmanagement.RealEstate;
+import felosy.assetmanagement.Stock;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -21,6 +27,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Date;
 import java.util.ResourceBundle;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Optional;
 
@@ -46,10 +53,15 @@ public class CryptoController implements Initializable {
     @FXML private Button btn_add;
     @FXML private Button btn_delete;
     @FXML private Button btn_back;
+    @FXML private Label netWorthLabel;
+    @FXML private Label totalInvestedLabel;
     @FXML
     private ToggleGroup assetTypeGroup;
 
     private CryptoDataService cryptoDataService = CryptoDataService.getInstance();
+    private GoldDataService goldDataService = GoldDataService.getInstance();
+    private RealEstateDataService realEstateDataService = RealEstateDataService.getInstance();
+    private StockDataService stockDataService = StockDataService.getInstance();
     private String currentUserId;
     private ObservableList<Cryptocurrency> cryptoList;
 
@@ -67,6 +79,7 @@ public class CryptoController implements Initializable {
 
         // Bind the table to the cryptoList
         cryptoTable.setItems(cryptoList);
+        updateSummaryLabels();
     }
 
     private void setupTable() {
@@ -96,6 +109,7 @@ public class CryptoController implements Initializable {
                     Cryptocurrency crypto = getTableView().getItems().get(getIndex());
                     cryptoList.remove(crypto);
                     cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
+                    updateSummaryLabels();
                 });
             }
 
@@ -312,6 +326,7 @@ public class CryptoController implements Initializable {
             result.ifPresent(crypto -> {
                 cryptoList.add(crypto);
                 cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
+                updateSummaryLabels();
             });
 
         } catch (Exception e) {
@@ -324,6 +339,8 @@ public class CryptoController implements Initializable {
         Cryptocurrency selectedCrypto = cryptoTable.getSelectionModel().getSelectedItem();
         if (selectedCrypto != null) {
             cryptoList.remove(selectedCrypto);
+            cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
+            updateSummaryLabels();
         } else {
             showAlert("Error", "Please select a cryptocurrency to delete");
         }
@@ -531,10 +548,58 @@ public class CryptoController implements Initializable {
                 if (index != -1) {
                     cryptoList.set(index, updatedCrypto);
                     cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
+                    updateSummaryLabels();
                 }
             });
         } catch (Exception e) {
             showAlert("Error", "An error occurred while opening the edit dialog: " + e.getMessage());
+        }
+    }
+
+    private void updateSummaryLabels() {
+        BigDecimal totalNetWorth = BigDecimal.ZERO;
+        BigDecimal totalInvestedInCrypto = BigDecimal.ZERO;
+
+        // Calculate Crypto net worth and total invested in Crypto
+        for (Cryptocurrency crypto : cryptoList) {
+            if (crypto.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(crypto.getCurrentValue());
+            }
+            if (crypto.getPurchasePrice() != null) {
+                totalInvestedInCrypto = totalInvestedInCrypto.add(crypto.getPurchasePrice());
+            }
+        }
+
+        // Add Gold net worth
+        ObservableList<Gold> goldList = goldDataService.getUserGoldList(currentUserId);
+        for (Gold gold : goldList) {
+            if (gold.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(gold.getCurrentValue());
+            }
+        }
+
+        // Add Real Estate net worth
+        ObservableList<RealEstate> realEstateList = realEstateDataService.getUserRealEstateList(currentUserId);
+        for (RealEstate property : realEstateList) {
+            if (property.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(property.getCurrentValue());
+            }
+        }
+
+        // Add Stock net worth
+        ObservableList<Stock> stockList = stockDataService.getUserStockList(currentUserId);
+        for (Stock stock : stockList) {
+            if (stock.getCurrentValue() != null) {
+                totalNetWorth = totalNetWorth.add(stock.getCurrentValue());
+            }
+        }
+
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance();
+        if (netWorthLabel != null) {
+            netWorthLabel.setText(currencyFormatter.format(totalNetWorth));
+        }
+        if (totalInvestedLabel != null) {
+            totalInvestedLabel.setText(currencyFormatter.format(totalInvestedInCrypto));
         }
     }
 }

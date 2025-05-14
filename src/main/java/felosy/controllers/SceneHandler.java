@@ -74,7 +74,7 @@ public class SceneHandler implements Initializable {
 
     public static void switchToAssetsAndInvestments() {
         try {
-            App.setRoot("assets_management");
+            App.setRoot("gold");
         } catch (IOException e) {
             System.err.println("Error loading signup view: " + e.getMessage());
             e.printStackTrace();
@@ -83,7 +83,7 @@ public class SceneHandler implements Initializable {
 
     public static void switchToRealEstate() {
         try {
-            App.setRoot("realestate_management");
+            App.setRoot("real_estate");
         } catch (IOException e) {
             System.err.println("Error loading signup view: " + e.getMessage());
             e.printStackTrace();
@@ -92,7 +92,7 @@ public class SceneHandler implements Initializable {
 
     public static void switchToStock() {
         try {
-            App.setRoot("stock_management");
+            App.setRoot("stocks");
         } catch (IOException e) {
             System.err.println("Error loading signup view: " + e.getMessage());
             e.printStackTrace();
@@ -101,7 +101,7 @@ public class SceneHandler implements Initializable {
 
     public static void switchToCrypto() {
         try {
-            App.setRoot("crypto_management");
+            App.setRoot("crypto");
         } catch (IOException e) {
             System.err.println("Error loading signup view: " + e.getMessage());
             e.printStackTrace();
