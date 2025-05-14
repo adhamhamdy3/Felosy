@@ -10,6 +10,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
 
 import java.io.IOException;
 import java.net.URL;
@@ -21,12 +23,29 @@ import felosy.assetmanagement.Portfolio;
 import felosy.storage.DataStorage;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import felosy.islamicfinance.ZakatCalculator;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ZakatAndComplianceController implements Initializable {
     @FXML
     private Button selectAssets_box;
     @FXML
     private Label assetsSelected_label;
+    @FXML
+    private Button calculate_btn;
+    @FXML
+    private ComboBox<String> currency_combobox;
+    @FXML
+    private Label curr_per_gram_label;
+    @FXML
+    private Label curr_per_silver;
+    @FXML
+    private TextField gold_field;
+    @FXML
+    private TextField silver_field;
+
+    private List<Asset> selectedAssets = new ArrayList<>();
 
     /**
      * @param location  The location used to resolve relative paths for the root object, or
@@ -36,7 +55,14 @@ public class ZakatAndComplianceController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
+        calculate_btn.setOnAction(this::handleCalculateButton);
+        // Populate currency combo box
+        currency_combobox.getItems().addAll(
+            "EGP", "USD", "EUR", "GBP", "JPY", "SAR", "AED", "CAD", "AUD", "CHF", "INR", "CNY"
+        );
+        currency_combobox.setValue("EGP");
+        currency_combobox.setOnAction(e -> updateGoldSilverLabels());
+        updateGoldSilverLabels();
     }
 
     public void switchToDashboard() {
@@ -86,6 +112,8 @@ public class ZakatAndComplianceController implements Initializable {
             // After dialog closes, update the label with the number of selected assets
             int selectedCount = dialogController.getSelectedAssets().size();
             updateAssetsSelectedLabel(selectedCount);
+            // Store selected assets for calculation
+            selectedAssets = new ArrayList<>(dialogController.getSelectedAssets());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -93,7 +121,78 @@ public class ZakatAndComplianceController implements Initializable {
         }
     }
 
+    @FXML
+    private void handleCalculateButton(ActionEvent event) {
+        if (selectedAssets == null || selectedAssets.isEmpty()) {
+            System.out.println("No assets selected for Zakat calculation.");
+            gold_field.setText("0.00");
+            silver_field.setText("0.00");
+            return;
+        }
+        ZakatCalculator calculator = new ZakatCalculator("user-portfolio", selectedAssets);
+        float totalZakat = calculator.calculateZakat();
+        System.out.println("Total Zakat Due: " + totalZakat);
+        // Print breakdown
+        java.util.Map<String, Float> zakatByAsset = calculator.getZakatByAsset();
+        zakatByAsset.forEach((type, amount) -> {
+            System.out.println(type + " Zakat: " + amount);
+        });
+        // Set gold and silver fields to Stock and Cryptocurrency Zakat
+        float stockZakat = 0.0f;
+        float cryptoZakat = 0.0f;
+        for (java.util.Map.Entry<String, Float> entry : zakatByAsset.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase("Stock")) {
+                stockZakat += entry.getValue();
+            } else if (entry.getKey().equalsIgnoreCase("Cryptocurrency")) {
+                cryptoZakat += entry.getValue();
+            }
+        }
+        gold_field.setText(String.format("%.2f", stockZakat));
+        silver_field.setText(String.format("%.2f", cryptoZakat));
+        // TODO: Display results in the UI (e.g., in a label or dialog)
+    }
+
     private void updateAssetsSelectedLabel(int count) {
         assetsSelected_label.setText(count + " assets selected");
+    }
+
+    private void updateGoldSilverLabels() {
+        String currency = currency_combobox.getValue();
+        // Mock prices per gram (could be fetched from a service)
+        double goldPriceUSD = 65.0; // USD/gram
+        double silverPriceUSD = 0.8; // USD/gram
+        double rate = 1.0;
+        String symbol = "$";
+        switch (currency) {
+            case "EGP":
+                rate = 48.0; symbol = "E£"; break;
+            case "EUR":
+                rate = 0.92; symbol = "€"; break;
+            case "GBP":
+                rate = 0.79; symbol = "£"; break;
+            case "JPY":
+                rate = 157.0; symbol = "¥"; break;
+            case "SAR":
+                rate = 3.75; symbol = "ر.س"; break;
+            case "AED":
+                rate = 3.67; symbol = "د.إ"; break;
+            case "CAD":
+                rate = 1.36; symbol = "C$"; break;
+            case "AUD":
+                rate = 1.52; symbol = "A$"; break;
+            case "CHF":
+                rate = 0.90; symbol = "Fr"; break;
+            case "INR":
+                rate = 83.0; symbol = "₹"; break;
+            case "CNY":
+                rate = 7.2; symbol = "¥"; break;
+            case "USD":
+            default:
+                rate = 1.0; symbol = "$"; break;
+        }
+        double goldPrice = goldPriceUSD * rate;
+        double silverPrice = silverPriceUSD * rate;
+        curr_per_gram_label.setText(String.format("%.2f %s / gram", goldPrice, symbol));
+        curr_per_silver.setText(String.format("%.2f %s / gram", silverPrice, symbol));
     }
 }

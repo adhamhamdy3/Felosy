@@ -5,6 +5,8 @@ import java.util.logging.Level;
 import felosy.reporting.Report;
 import felosy.authentication.User;
 import felosy.islamicfinance.config.IslamicFinanceConfig;
+import felosy.assetmanagement.Asset;
+import java.math.BigDecimal;
 
 /**
  * Calculates Zakat for a portfolio
@@ -13,19 +15,41 @@ import felosy.islamicfinance.config.IslamicFinanceConfig;
 public class ZakatCalculator extends IslamicFinanceBase {
     private final IslamicFinanceConfig config;
     private final Map<String, Float> assetValues;
+    private final List<Asset> assets;
 
     public ZakatCalculator(String portfolioId) {
         super(portfolioId);
         this.config = IslamicFinanceConfig.getInstance();
         this.assetValues = new HashMap<>();
+        this.assets = new ArrayList<>();
         initializeAssetValues();
     }
     
+    // New constructor for dynamic asset list
+    public ZakatCalculator(String portfolioId, List<Asset> assets) {
+        super(portfolioId);
+        this.config = IslamicFinanceConfig.getInstance();
+        this.assetValues = new HashMap<>();
+        this.assets = assets != null ? new ArrayList<>(assets) : new ArrayList<>();
+        initializeAssetValuesFromAssets();
+    }
+
     private void initializeAssetValues() {
         // Simplified asset values for academic purposes
         assetValues.put("Stocks", 50000.0f);
         assetValues.put("Gold", 15000.0f);
         assetValues.put("Cash", 5000.0f);
+    }
+
+    private void initializeAssetValuesFromAssets() {
+        assetValues.clear();
+        if (assets != null) {
+            for (Asset asset : assets) {
+                String type = asset.getClass().getSimpleName();
+                float value = asset.getCurrentValue() != null ? asset.getCurrentValue().floatValue() : 0.0f;
+                assetValues.merge(type, value, Float::sum);
+            }
+        }
     }
 
     @Override
@@ -56,15 +80,24 @@ public class ZakatCalculator extends IslamicFinanceBase {
 
     public Map<String, Float> getZakatByAsset() {
         Map<String, Float> zakatByAsset = new HashMap<>();
-        
-        for (Map.Entry<String, Float> entry : assetValues.entrySet()) {
-            float assetValue = entry.getValue();
-            if (assetValue > 0) {
-                float assetZakat = assetValue * (float)config.getZakatRate();
-                zakatByAsset.put(entry.getKey(), assetZakat);
+        if (assets != null && !assets.isEmpty()) {
+            for (Asset asset : assets) {
+                String type = asset.getClass().getSimpleName();
+                float value = asset.getCurrentValue() != null ? asset.getCurrentValue().floatValue() : 0.0f;
+                if (value > 0) {
+                    float assetZakat = value * (float)config.getZakatRate();
+                    zakatByAsset.merge(type, assetZakat, Float::sum);
+                }
+            }
+        } else {
+            for (Map.Entry<String, Float> entry : assetValues.entrySet()) {
+                float assetValue = entry.getValue();
+                if (assetValue > 0) {
+                    float assetZakat = assetValue * (float)config.getZakatRate();
+                    zakatByAsset.put(entry.getKey(), assetZakat);
+                }
             }
         }
-        
         return zakatByAsset;
     }
 
@@ -94,8 +127,16 @@ public class ZakatCalculator extends IslamicFinanceBase {
     }
 
     private float calculateTotalValue() {
-        return assetValues.values().stream()
-            .reduce(0.0f, Float::sum);
+        if (assets != null && !assets.isEmpty()) {
+            return assets.stream()
+                .map(Asset::getCurrentValue)
+                .filter(java.util.Objects::nonNull)
+                .map(BigDecimal::floatValue)
+                .reduce(0.0f, Float::sum);
+        } else {
+            return assetValues.values().stream()
+                .reduce(0.0f, Float::sum);
+        }
     }
 
     public Map<String, Float> getAssetValues() {
