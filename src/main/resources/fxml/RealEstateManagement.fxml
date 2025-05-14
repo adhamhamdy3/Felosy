@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.RealEstateController">
+    <top>
+        <VBox BorderPane.alignment="CENTER">
+            <children>
+                <Label text="Assets Management (Real Estate)">
+                    <font>
+                        <Font size="17.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets left="30.0" top="5.0" />
+                    </VBox.margin>
+                </Label>
+                <HBox>
+                    <children>
+                        <Button fx:id="btn_gold" mnemonicParsing="false" text="Gold">
+                            <HBox.margin>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                            </HBox.margin>
+                        </Button>
+                        <Button fx:id="btn_crypto" mnemonicParsing="false" text="Cryptocurrency">
+                            <HBox.margin>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                            </HBox.margin>
+                        </Button>
+                        <Button fx:id="btn_Stock" mnemonicParsing="false" text="Stock">
+                            <HBox.margin>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                            </HBox.margin>
+                        </Button>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Text fx:id="errorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" text="Error" visible="false">
+                            <HBox.margin>
+                                <Insets top="11.0" />
+                            </HBox.margin>
+                        </Text>
+                        <Button fx:id="btn_back" mnemonicParsing="false" onAction="#handleBack" text="Back to Main">
+                            <HBox.margin>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                            </HBox.margin>
+                        </Button>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </top>
+    <center>
+        <TableView fx:id="realEstateTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn fx:id="idColumn" prefWidth="80.0" text="ID" />
+                <TableColumn fx:id="nameColumn" prefWidth="100.0" text="Name" />
+                <TableColumn fx:id="locationColumn" prefWidth="120.0" text="Location" />
+                <TableColumn fx:id="propertyTypeColumn" prefWidth="120.0" text="Property Type" />
+                <TableColumn fx:id="areaColumn" prefWidth="100.0" text="Area (m²)" />
+                <TableColumn fx:id="rentalIncomeColumn" prefWidth="120.0" text="Monthly Rental" />
+                <TableColumn fx:id="valueColumn" prefWidth="120.0" text="Current Value" />
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <VBox spacing="10" BorderPane.alignment="CENTER">
+            <children>
+                <HBox spacing="10">
+                    <children>
+                        <TextField fx:id="txt_name" prefHeight="26.0" prefWidth="120.0" promptText="Name" />
+                        <TextField fx:id="txt_location" prefHeight="26.0" prefWidth="120.0" promptText="Location" />
+                        <ComboBox fx:id="propertyTypeComboBox" prefWidth="150.0" promptText="Property Type" />
+                        <TextField fx:id="txt_area" prefHeight="26.0" prefWidth="100.0" promptText="Area (m²)" />
+                    </children>
+                    <padding>
+                        <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
+                    </padding>
+                </HBox>
+                <HBox spacing="10">
+                    <children>
+                        <TextField fx:id="txt_rentalIncome" prefHeight="26.0" prefWidth="120.0" promptText="Monthly Rental" />
+                        <TextField fx:id="txt_occupancyRate" prefHeight="26.0" prefWidth="120.0" promptText="Occupancy Rate" />
+                        <Button fx:id="btn_add" mnemonicParsing="false" onAction="#handleAddRealEstate" text="Add" />
+                        <Button fx:id="btn_delete" mnemonicParsing="false" onAction="#handleDeleteRealEstate" text="Delete" />
+                    </children>
+                    <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
+                    </padding>
+                </HBox>
+            </children>
+        </VBox>
+    </bottom>
+</BorderPane>

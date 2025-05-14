@@ -1,18 +1,21 @@
 package felosy.controllers;
 
+import felosy.App;
 import felosy.assetmanagement.Gold;
+import felosy.assetmanagement.GoldDataService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.text.Text;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Date;
 import java.util.ResourceBundle;
-import java.util.UUID;
 
 public class AssetsController implements Initializable {
 
@@ -29,18 +32,29 @@ public class AssetsController implements Initializable {
     @FXML private Button btn_crypto;
     @FXML private Button btn_delete;
     @FXML private Button btn_realEstate;
-    @FXML private TextField txt_ID;
     @FXML private TextField txt_grams;
     @FXML private TextField txt_name;
     @FXML private TextField txt_purity;
+    @FXML private Text loginErrorText;
+
+    private GoldDataService goldDataService = GoldDataService.getInstance();
+    private String currentUserId; // Will store the current user's ID
+
 
     private ObservableList<Gold> goldList = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        // Get current user ID from authentication service
+        currentUserId = App.getCurrentUser().getUserId(); // Assuming you have this method
+
         setupTable();
         setupButtons();
+        // Load user's gold data
+        goldList = goldDataService.getUserGoldList(currentUserId);
+
     }
+
 
     private void setupTable() {
         // Initialize columns
@@ -65,6 +79,45 @@ public class AssetsController implements Initializable {
         btn_add.setOnAction(e -> handleAddGold());
         btn_delete.setOnAction(e -> handleDeleteGold());
         btn_back.setOnAction(e -> handleBack());
+        btn_crypto.setOnAction(e -> handleCrypto());
+        btn_realEstate.setOnAction(e -> handleRealState());
+        btn_Stock.setOnAction(e -> handleStock());
+    }
+
+    private String generateEightDigitId() {
+        // Generate random number between 10000000 and 99999999
+        int randomNum = 10000000 + (int)(Math.random() * 90000000);
+        return String.valueOf(randomNum);
+    }
+
+    private void handleCrypto() {
+        try {
+            // Save data before navigating back
+            goldDataService.saveUserGoldList(currentUserId, goldList);
+            App.setRoot("CryptoManagement");
+        } catch (IOException e) {
+            showBackError("Error switching to Crypto management");
+        }
+    }
+
+    private void handleRealState() {
+        try {
+            // Save data before navigating back
+            goldDataService.saveUserGoldList(currentUserId, goldList);
+            App.setRoot("RealEstateManagement");
+        } catch (IOException e) {
+            showBackError("Error switching to Crypto management");
+        }
+    }
+
+    private void handleStock() {
+        try {
+            // Save data before navigating back
+            goldDataService.saveUserGoldList(currentUserId, goldList);
+            App.setRoot("StockManagement");
+        } catch (IOException e) {
+            showBackError("Error switching to Crypto management");
+        }
     }
 
     private void handleAddGold() {
@@ -89,7 +142,7 @@ public class AssetsController implements Initializable {
             // Create new Gold asset
             // Note: Using placeholder values for purchase price and current value
             // You should implement proper price calculation based on your requirements
-            String assetId = UUID.randomUUID().toString();
+            String assetId = generateEightDigitId();
             Date purchaseDate = new Date();
             BigDecimal purchasePrice = grams.multiply(new BigDecimal("50")); // Example price calculation
             BigDecimal currentValue = purchasePrice; // Initially same as purchase price
@@ -131,10 +184,22 @@ public class AssetsController implements Initializable {
         txt_purity.clear();
     }
 
-    private void handleBack() {
-        // Implement navigation back to main screen
-        // This will depend on your navigation setup
+    private void showBackError(String errorMessage) {
+        loginErrorText.setText(errorMessage);
+        loginErrorText.setVisible(true);
     }
+
+    @FXML
+    private void handleBack() {
+        try {
+            // Save data before navigating back
+            goldDataService.saveUserGoldList(currentUserId, goldList);
+            App.setRoot("dashboard");
+        } catch (IOException e) {
+            showBackError("Error returning to dashboard");
+        }
+    }
+
 
     private void showAlert(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);

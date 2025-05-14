@@ -1,5 +1,6 @@
 package felosy;
 
+import felosy.authentication.User;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -9,6 +10,16 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class App extends Application {
+
+    private static User currentUser;
+
+    public static void setCurrentUser(User user) {
+        currentUser = user;
+    }
+
+    public static User getCurrentUser() {
+        return currentUser;
+    }
 
     private static Stage primaryStage;
 

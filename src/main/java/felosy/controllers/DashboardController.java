@@ -34,12 +34,12 @@ public class DashboardController {
 
     @FXML
     public void initialize() {
-        welcomeMsg_label.setText("Welcome, " + AuthController.getUsername() + "!");
+        //welcomeMsg_label.setText("Welcome, " + AuthController.getUsername() + "!");
     }
     @FXML
     public void handleLogOutClick(ActionEvent event) {
         try {
-            App.setRoot("index");
+            App.setRoot("login");
         } catch (IOException e) {
             showLogoutError("Error loading Main page");
         }
