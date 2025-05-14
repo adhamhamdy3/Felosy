@@ -178,39 +178,19 @@ public class RealEstateController implements Initializable {
 
     @FXML
     private void handleBack() {
-        try {
-            realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
-            App.setRoot("dashboard");
-        } catch (IOException e) {
-            showError("Error returning to dashboard");
-        }
+        SceneHandler.switchToDashboard();
     }
 
     private void switchToGold() {
-        try {
-            realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
-            App.setRoot("AssetsManagement");
-        } catch (IOException e) {
-            showError("Error switching to Gold management");
-        }
+        SceneHandler.switchToAssetsAndInvestments();
     }
 
     private void switchToCrypto() {
-        try {
-            realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
-            App.setRoot("CryptoManagement");
-        } catch (IOException e) {
-            showError("Error switching to Cryptocurrency management");
-        }
+        SceneHandler.switchToCrypto();
     }
 
     private void switchToStock() {
-        try {
-            realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
-            App.setRoot("StockManagement");
-        } catch (IOException e) {
-            showError("Error switching to Cryptocurrency management");
-        }
+        SceneHandler.switchToStock();
     }
 
     private void showError(String errorMessage) {

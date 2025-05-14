@@ -161,39 +161,19 @@ public class CryptoController implements Initializable {
 
     @FXML
     private void handleBack() {
-        try {
-            cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
-            App.setRoot("dashboard");
-        } catch (IOException e) {
-            showError("Error returning to dashboard");
-        }
+        SceneHandler.switchToDashboard();
     }
 
     private void switchToGold() {
-        try {
-            cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
-            App.setRoot("AssetsManagement");
-        } catch (IOException e) {
-            showError("Error switching to Gold management");
-        }
+        SceneHandler.switchToAssetsAndInvestments();
     }
 
     private void switchToRealEstate() {
-        try {
-            cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
-            App.setRoot("RealEstateManagement");
-        } catch (IOException e) {
-            showError("Error switching to Gold management");
-        }
+        SceneHandler.switchToRealEstate();
     }
 
     private void switchToStock() {
-        try {
-            cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
-            App.setRoot("StockManagement");
-        } catch (IOException e) {
-            showError("Error switching to Gold management");
-        }
+        SceneHandler.switchToStock();
     }
 
     private void showError(String errorMessage) {

@@ -226,39 +226,19 @@ public class StockController implements Initializable {
 
     @FXML
     private void handleBack() {
-        try {
-            stockDataService.saveUserStockList(currentUserId, stockList);
-            App.setRoot("dashboard");
-        } catch (IOException e) {
-            showError("Error returning to dashboard");
-        }
+        SceneHandler.switchToDashboard();
     }
 
     private void switchToGold() {
-        try {
-            stockDataService.saveUserStockList(currentUserId, stockList);
-            App.setRoot("AssetsManagement");
-        } catch (IOException e) {
-            showError("Error switching to Gold management");
-        }
+        SceneHandler.switchToAssetsAndInvestments();
     }
 
     private void switchToCrypto() {
-        try {
-            stockDataService.saveUserStockList(currentUserId, stockList);
-            App.setRoot("CryptoManagement");
-        } catch (IOException e) {
-            showError("Error switching to Cryptocurrency management");
-        }
+        SceneHandler.switchToCrypto();
     }
 
     private void switchToRealEstate() {
-        try {
-            stockDataService.saveUserStockList(currentUserId, stockList);
-            App.setRoot("RealEstateManagement");
-        } catch (IOException e) {
-            showError("Error switching to Real Estate management");
-        }
+        SceneHandler.switchToRealEstate();
     }
 
     private void showError(String errorMessage) {

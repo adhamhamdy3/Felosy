@@ -87,33 +87,15 @@ public class AssetsController implements Initializable {
     }
 
     private void handleCrypto() {
-        try {
-            // Save data before navigating back
-            goldDataService.saveUserGoldList(currentUserId, goldList);
-            App.setRoot("CryptoManagement");
-        } catch (IOException e) {
-            showBackError("Error switching to Crypto management");
-        }
+        SceneHandler.switchToCrypto();
     }
 
     private void handleRealState() {
-        try {
-            // Save data before navigating back
-            goldDataService.saveUserGoldList(currentUserId, goldList);
-            App.setRoot("RealEstateManagement");
-        } catch (IOException e) {
-            showBackError("Error switching to Crypto management");
-        }
+        SceneHandler.switchToRealEstate();
     }
 
     private void handleStock() {
-        try {
-            // Save data before navigating back
-            goldDataService.saveUserGoldList(currentUserId, goldList);
-            App.setRoot("StockManagement");
-        } catch (IOException e) {
-            showBackError("Error switching to Crypto management");
-        }
+        SceneHandler.switchToStock();
     }
 
     private void handleAddGold() {
@@ -189,13 +171,7 @@ public class AssetsController implements Initializable {
 
     @FXML
     private void handleBack() {
-        try {
-            // Save data before navigating back
-            goldDataService.saveUserGoldList(currentUserId, goldList);
-            App.setRoot("dashboard");
-        } catch (IOException e) {
-            showBackError("Error returning to dashboard");
-        }
+        SceneHandler.switchToDashboard();
     }
 
 

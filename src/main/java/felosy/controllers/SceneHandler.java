@@ -74,7 +74,34 @@ public class SceneHandler implements Initializable {
 
     public static void switchToAssetsAndInvestments() {
         try {
-            App.setRoot("AssetsManagement");
+            App.setRoot("assets_management");
+        } catch (IOException e) {
+            System.err.println("Error loading signup view: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void switchToRealEstate() {
+        try {
+            App.setRoot("realestate_management");
+        } catch (IOException e) {
+            System.err.println("Error loading signup view: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void switchToStock() {
+        try {
+            App.setRoot("stock_management");
+        } catch (IOException e) {
+            System.err.println("Error loading signup view: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void switchToCrypto() {
+        try {
+            App.setRoot("crypto_management");
         } catch (IOException e) {
             System.err.println("Error loading signup view: " + e.getMessage());
             e.printStackTrace();

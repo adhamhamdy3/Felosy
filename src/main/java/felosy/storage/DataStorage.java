@@ -26,8 +26,8 @@ public class DataStorage {
     
     // Directory paths
     private static final String DATA_DIR = "data";
-    private static final String BACKUP_DIR = "data/backups";
-    private static final String TEMP_DIR = "data/temp";
+    private static final String BACKUP_DIR = DATA_DIR + "/backups";
+    private static final String TEMP_DIR = DATA_DIR + "/temp";
     
     // File names for different data types
     private static final String USERS_FILE = "users.dat";
