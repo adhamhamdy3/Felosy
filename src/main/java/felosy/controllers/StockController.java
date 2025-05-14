@@ -2,7 +2,7 @@ package felosy.controllers;
 
 import felosy.App;
 import felosy.assetmanagement.Stock;
-import felosy.assetmanagement.StockDataService;
+import felosy.services.StockDataService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;

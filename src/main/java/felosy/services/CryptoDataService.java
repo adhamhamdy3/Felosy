@@ -1,5 +1,6 @@
-package felosy.assetmanagement;
+package felosy.services;
 
+import felosy.assetmanagement.Cryptocurrency;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import java.io.*;

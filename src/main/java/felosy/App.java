@@ -1,9 +1,9 @@
 package felosy;
 
-import felosy.assetmanagement.CryptoDataService;
-import felosy.assetmanagement.GoldDataService;
-import felosy.assetmanagement.RealEstateDataService;
-import felosy.assetmanagement.StockDataService;
+import felosy.services.CryptoDataService;
+import felosy.services.GoldDataService;
+import felosy.services.RealEstateDataService;
+import felosy.services.StockDataService;
 import felosy.authentication.User;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

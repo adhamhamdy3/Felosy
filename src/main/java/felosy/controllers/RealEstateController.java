@@ -2,7 +2,7 @@ package felosy.controllers;
 
 import felosy.App;
 import felosy.assetmanagement.RealEstate;
-import felosy.assetmanagement.RealEstateDataService;
+import felosy.services.RealEstateDataService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;

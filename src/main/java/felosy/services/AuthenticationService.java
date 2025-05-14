@@ -1,8 +1,11 @@
-package felosy.authentication;
+package felosy.services;
 
+import felosy.authentication.AuthenticationResponse;
+import felosy.authentication.AuthenticationResult;
 import java.util.HashMap;
 import java.util.Map;
 
+import felosy.authentication.User;
 import felosy.authentication.User;
 import felosy.utils.FileStorageUtil;
 

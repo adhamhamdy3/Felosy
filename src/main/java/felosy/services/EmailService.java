@@ -1,4 +1,4 @@
-package felosy.authentication;
+package felosy.services;
 
 import javax.mail.*;
 import javax.mail.internet.*;

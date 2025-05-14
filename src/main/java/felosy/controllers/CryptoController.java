@@ -2,7 +2,7 @@ package felosy.controllers;
 
 import felosy.App;
 import felosy.assetmanagement.Cryptocurrency;
-import felosy.assetmanagement.CryptoDataService;
+import felosy.services.CryptoDataService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;

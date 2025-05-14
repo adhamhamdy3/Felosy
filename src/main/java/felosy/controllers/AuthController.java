@@ -6,7 +6,7 @@ import java.util.ResourceBundle;
 
 import felosy.App;
 import felosy.authentication.User;
-import felosy.authentication.AuthenticationService;
+import felosy.services.AuthenticationService;
 import felosy.utils.AlertUtil;
 import felosy.utils.ValidationUtil;
 import felosy.authentication.AuthenticationResponse;
