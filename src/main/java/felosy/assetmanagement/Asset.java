@@ -1,10 +1,12 @@
 package felosy.assetmanagement;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 
-public abstract class Asset {
+public abstract class Asset implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String assetId;
     private String name;
     private Date purchaseDate;

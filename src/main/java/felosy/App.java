@@ -1,5 +1,9 @@
 package felosy;
 
+import felosy.assetmanagement.CryptoDataService;
+import felosy.assetmanagement.GoldDataService;
+import felosy.assetmanagement.RealEstateDataService;
+import felosy.assetmanagement.StockDataService;
 import felosy.authentication.User;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -50,6 +54,16 @@ public class App extends Application {
         }
         return fxmlLoader.load();
     }
+
+    @Override
+    public void stop() {
+        // Save data when the application closes
+        GoldDataService.getInstance().shutdown();
+        CryptoDataService.getInstance().shutdown();
+        RealEstateDataService.getInstance().shutdown();
+        StockDataService.getInstance().shutdown();
+    }
+
 
     public static void main(String[] args) {
         launch();

@@ -1,5 +1,6 @@
 package felosy.assetmanagement;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -9,7 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Stock extends Asset {
+public class Stock extends Asset implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private TickerType ticker;
     private String exchange;
     private int sharesOwned;
@@ -20,7 +23,8 @@ public class Stock extends Asset {
     /**
      * Represents a stock purchase or sale transaction
      */
-    private static class Transaction {
+    private static class Transaction implements Serializable {
+        private static final long serialVersionUID = 1L;
         private LocalDate date;
         private int quantity;
         private BigDecimal pricePerShare;

@@ -55,13 +55,21 @@ public class StockController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        // Get current user's ID from the App class
         currentUserId = App.getCurrentUser().getUserId();
+
+        // Get the user's stock list from the service
         stockList = stockDataService.getUserStockList(currentUserId);
 
+        // Setup UI components
         setupTable();
         setupComboBox();
         setupButtons();
+
+        // Bind the table to the stockList
+        stockTable.setItems(stockList);
     }
+
 
     private void setupTable() {
         idColumn.setCellValueFactory(new PropertyValueFactory<>("assetId"));
@@ -107,20 +115,29 @@ public class StockController implements Initializable {
         try {
             validateInputs();
 
-            String id = generateEightDigitId();
+            String assetId = generateEightDigitId();
             String name = txt_name.getText();
             TickerType ticker = tickerComboBox.getValue();
             String exchange = txt_exchange.getText();
             int shares = Integer.parseInt(txt_shares.getText());
-            BigDecimal price = new BigDecimal(txt_price.getText());
+            BigDecimal currentPrice = new BigDecimal(txt_price.getText());
             BigDecimal dividendYield = new BigDecimal(txt_dividendYield.getText());
             BigDecimal eps = new BigDecimal(txt_eps.getText());
 
-            Stock stock = new Stock(id, name, new Date(), price, price,
-                    ticker, exchange, shares, dividendYield, eps);
+            Stock newStock = new Stock(
+                    assetId, name, new Date(),
+                    currentPrice.multiply(BigDecimal.valueOf(shares)),
+                    currentPrice.multiply(BigDecimal.valueOf(shares)),
+                    ticker, exchange, shares, dividendYield, eps
+            );
 
-            stockList.add(stock);
+            stockList.add(newStock);
+
+            // Save the updated list
+            stockDataService.saveUserStockList(currentUserId, stockList);
+
             clearInputFields();
+
         } catch (IllegalArgumentException e) {
             showAlert("Error", e.getMessage());
         }
@@ -142,6 +159,7 @@ public class StockController implements Initializable {
         } else {
             showAlert("Error", "Please select a stock to buy shares");
         }
+        stockDataService.saveUserStockList(currentUserId, stockList);
     }
 
     @FXML
@@ -163,6 +181,7 @@ public class StockController implements Initializable {
         } else {
             showAlert("Error", "Please select a stock to sell shares");
         }
+        stockDataService.saveUserStockList(currentUserId, stockList);
     }
 
     @FXML
@@ -170,11 +189,13 @@ public class StockController implements Initializable {
         Stock selectedStock = stockTable.getSelectionModel().getSelectedItem();
         if (selectedStock != null) {
             stockList.remove(selectedStock);
+            stockDataService.saveUserStockList(currentUserId, stockList);
             clearInputFields();
         } else {
             showAlert("Error", "Please select a stock to delete");
         }
     }
+
 
     private void validateInputs() {
         if (txt_name.getText().isEmpty() || tickerComboBox.getValue() == null ||

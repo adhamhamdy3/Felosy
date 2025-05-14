@@ -49,13 +49,21 @@ public class RealEstateController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        // Get current user's ID from the App class
         currentUserId = App.getCurrentUser().getUserId();
+
+        // Get the user's real estate list from the service
         realEstateList = realEstateDataService.getUserRealEstateList(currentUserId);
 
+        // Setup UI components
         setupTable();
         setupComboBox();
         setupButtons();
+
+        // Bind the table to the realEstateList
+        realEstateTable.setItems(realEstateList);
     }
+
 
     private void setupTable() {
         idColumn.setCellValueFactory(new PropertyValueFactory<>("assetId"));
@@ -93,31 +101,49 @@ public class RealEstateController implements Initializable {
     @FXML
     private void handleAddRealEstate() {
         try {
-            String id = generateEightDigitId();
+            // Validate inputs
+            if (txt_name.getText().isEmpty() || txt_location.getText().isEmpty()) {
+                showAlert("Error", "Name and location cannot be empty");
+                return;
+            }
+
+            if (propertyTypeComboBox.getValue() == null) {
+                showAlert("Error", "Please select a property type");
+                return;
+            }
+
+            // Parse inputs
             String name = txt_name.getText();
             String location = txt_location.getText();
             RealEstate.PropertyType propertyType = propertyTypeComboBox.getValue();
             BigDecimal area = new BigDecimal(txt_area.getText());
             BigDecimal rentalIncome = new BigDecimal(txt_rentalIncome.getText());
-            float occupancyRate = Float.parseFloat(txt_occupancyRate.getText());
+            float occupancyRate = Float.parseFloat(txt_occupancyRate.getText()) / 100.0f;
 
-            if (name.isEmpty() || location.isEmpty() || propertyType == null) {
-                showAlert("Error", "Please fill all required fields");
-                return;
-            }
+            // Create new RealEstate asset
+            String assetId = generateEightDigitId();
+            Date purchaseDate = new Date();
+            BigDecimal purchasePrice = area.multiply(new BigDecimal("5000")); // Example price per square meter
+            BigDecimal currentValue = purchasePrice; // Initially same as purchase price
 
-            if (occupancyRate < 0 || occupancyRate > 1) {
-                showAlert("Error", "Occupancy rate must be between 0 and 1");
-                return;
-            }
+            RealEstate newProperty = new RealEstate(
+                    assetId, name, purchaseDate, purchasePrice, currentValue,
+                    location, area, propertyType, rentalIncome, occupancyRate
+            );
 
-            RealEstate property = new RealEstate(id, name, new Date(), BigDecimal.valueOf(200),
-                    BigDecimal.valueOf(150), location, area, propertyType, rentalIncome, occupancyRate);
+            // Add to the observable list
+            realEstateList.add(newProperty);
 
-            realEstateList.add(property);
+            // Save the updated list
+            realEstateDataService.saveUserRealEstateList(currentUserId, realEstateList);
+
+            // Clear input fields
             clearInputFields();
+
         } catch (NumberFormatException e) {
             showAlert("Error", "Please enter valid numbers for area, rental income, and occupancy rate");
+        } catch (IllegalArgumentException e) {
+            showAlert("Error", e.getMessage());
         }
     }
 

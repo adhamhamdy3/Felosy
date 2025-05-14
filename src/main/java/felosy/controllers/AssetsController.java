@@ -45,35 +45,31 @@ public class AssetsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // Get current user ID from authentication service
-        currentUserId = App.getCurrentUser().getUserId(); // Assuming you have this method
+        // Get current user's ID from the App class
+        currentUserId = App.getCurrentUser().getUserId();
 
-        setupTable();
-        setupButtons();
-        // Load user's gold data
+        // Get the user's gold list from the service
         goldList = goldDataService.getUserGoldList(currentUserId);
 
+        // Set up the table
+        setupTable();
+        setupButtons();
+
+        // Bind the table to the goldList
+        goldTable.setItems(goldList);
     }
 
 
+
     private void setupTable() {
-        // Initialize columns
+        // Configure the columns
         idColumn.setCellValueFactory(new PropertyValueFactory<>("assetId"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         gramsColumn.setCellValueFactory(new PropertyValueFactory<>("weightGrams"));
         purityColumn.setCellValueFactory(new PropertyValueFactory<>("purity"));
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("currentValue"));
-
-        // Set the items
-        goldTable.setItems(goldList);
-
-        // Add selection listener
-        goldTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                displaySelectedGold(newSelection);
-            }
-        });
     }
+
 
     private void setupButtons() {
         btn_add.setOnAction(e -> handleAddGold());
@@ -140,8 +136,6 @@ public class AssetsController implements Initializable {
             }
 
             // Create new Gold asset
-            // Note: Using placeholder values for purchase price and current value
-            // You should implement proper price calculation based on your requirements
             String assetId = generateEightDigitId();
             Date purchaseDate = new Date();
             BigDecimal purchasePrice = grams.multiply(new BigDecimal("50")); // Example price calculation
@@ -149,8 +143,11 @@ public class AssetsController implements Initializable {
 
             Gold newGold = new Gold(assetId, name, purchaseDate, purchasePrice, currentValue, grams, purity);
 
-            // Add to table
+            // Add to the observable list
             goldList.add(newGold);
+
+            // Save the updated list to the service
+            goldDataService.saveUserGoldList(currentUserId, goldList);
 
             // Clear input fields
             clearInputFields();
@@ -161,6 +158,7 @@ public class AssetsController implements Initializable {
             showAlert("Error", e.getMessage());
         }
     }
+
 
     private void handleDeleteGold() {
         Gold selectedGold = goldTable.getSelectionModel().getSelectedItem();

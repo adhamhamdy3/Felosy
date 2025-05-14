@@ -44,29 +44,31 @@ public class CryptoController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        // Get current user's ID from the App class
         currentUserId = App.getCurrentUser().getUserId();
+
+        // Get the user's crypto list from the service
         cryptoList = cryptoDataService.getUserCryptoList(currentUserId);
 
+        // Set up the UI components
         setupTable();
         setupComboBox();
         setupButtons();
+
+        // Bind the table to the cryptoList
+        cryptoTable.setItems(cryptoList);
     }
+
 
     private void setupTable() {
+        // Configure the columns
         idColumn.setCellValueFactory(new PropertyValueFactory<>("assetId"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        coinTypeColumn.setCellValueFactory(new PropertyValueFactory<>("coin"));
+        coinTypeColumn.setCellValueFactory(new PropertyValueFactory<>("coinType"));
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("currentValue"));
-
-        cryptoTable.setItems(cryptoList);
-
-        cryptoTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                displaySelectedCrypto(newSelection);
-            }
-        });
     }
+
 
     private void setupComboBox() {
         coinTypeComboBox.setItems(FXCollections.observableArrayList(Cryptocurrency.CoinType.values()));
@@ -86,22 +88,51 @@ public class CryptoController implements Initializable {
     @FXML
     private void handleAddCrypto() {
         try {
-            String id = generateEightDigitId();
+            // Input validation
+            if (txt_name.getText().isEmpty()) {
+                showAlert("Error", "Name cannot be empty");
+                return;
+            }
+
+            if (coinTypeComboBox.getValue() == null) {
+                showAlert("Error", "Please select a coin type");
+                return;
+            }
+
+            // Parse inputs
             String name = txt_name.getText();
             Cryptocurrency.CoinType coinType = coinTypeComboBox.getValue();
             BigDecimal amount = new BigDecimal(txt_amount.getText());
 
-            if (name.isEmpty() || coinType == null) {
-                showAlert("Error", "Please fill all fields");
-                return;
-            }
+            // Create new Cryptocurrency asset
+            String assetId = generateEightDigitId();
+            Date purchaseDate = new Date();
+            BigDecimal purchasePrice = amount.multiply(new BigDecimal("50000")); // Example price
+            BigDecimal currentValue = purchasePrice; // Initially same as purchase price
 
-            Cryptocurrency crypto = new Cryptocurrency(id, name, new Date(), BigDecimal.valueOf(250),
-                    BigDecimal.valueOf(250), coinType, amount);
-            cryptoList.add(crypto);
+            Cryptocurrency newCrypto = new Cryptocurrency(
+                    assetId,          // assetId
+                    name,            // name
+                    purchaseDate,    // purchaseDate
+                    purchasePrice,   // purchasePrice
+                    currentValue,    // currentValue
+                    coinType,        // coinType
+                    amount          // amount
+            );
+
+            // Add to the observable list
+            cryptoList.add(newCrypto);
+
+            // Save the updated list to the service
+            cryptoDataService.saveUserCryptoList(currentUserId, cryptoList);
+
+            // Clear input fields
             clearInputFields();
+
         } catch (NumberFormatException e) {
             showAlert("Error", "Please enter a valid amount");
+        } catch (IllegalArgumentException e) {
+            showAlert("Error", e.getMessage());
         }
     }
 

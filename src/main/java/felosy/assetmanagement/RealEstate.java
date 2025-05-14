@@ -1,11 +1,13 @@
 package felosy.assetmanagement;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 
-public class RealEstate extends Asset {
-    public enum PropertyType {
+public class RealEstate extends Asset implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public enum PropertyType implements Serializable {
         SINGLE_FAMILY_RESIDENTIAL,
         MULTI_FAMILY_RESIDENTIAL,
         OFFICE, 
@@ -16,10 +18,10 @@ public class RealEstate extends Asset {
         HOTELS_HOSPITALS, 
         MIXED_USE,
         OTHER;
-        
+
         @Override
         public String toString() {
-            return this.name();
+            return name().replace('_', ' ');
         }
     }
     

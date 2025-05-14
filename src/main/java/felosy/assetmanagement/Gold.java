@@ -1,10 +1,12 @@
 package felosy.assetmanagement;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Date;
 
-public final class Gold extends Asset {
+public final class Gold extends Asset implements Serializable {
+    private static final long serialVersionUID = 1L;
     private BigDecimal weightGrams;
     private BigDecimal purity;
     private static final BigDecimal DEFAULT_STORAGE_RATE = new BigDecimal("0.0015"); // 0.15% per annum

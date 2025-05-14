@@ -1,10 +1,13 @@
 package felosy.assetmanagement;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public final class Cryptocurrency extends Asset {
-    public enum CoinType {
+public final class Cryptocurrency extends Asset implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public enum CoinType implements Serializable {
         BTC,
         ETH,
         XRP,
