@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.HBox?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.SelectAssetsDialogController">
+    <children>
+        <TableView fx:id="assetsTableView"
+                   AnchorPane.topAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="50.0">
+            <columns>
+                <TableColumn fx:id="selectColumn" prefWidth="40.0" text="Select" />
+                <TableColumn fx:id="idColumn" prefWidth="75.0" text="ID"/>
+                <TableColumn fx:id="nameColumn" prefWidth="150.0" text="Name"/>
+                <TableColumn fx:id="typeColumn" prefWidth="100.0" text="Type"/>
+                <TableColumn fx:id="valueColumn" prefWidth="100.0" text="Value"/>
+                <TableColumn fx:id="hawlDateColumn" prefWidth="120.0" text="Hawl Date"/>
+                <TableColumn fx:id="hawlDatePassedColumn" maxWidth="10000.0" text="Hawl Date Passed" />
+            </columns>
+        </TableView>
+        <HBox spacing="10" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="14.0">
+            <children>
+                <Button fx:id="saveButton" text="Save Selection" onAction="#handleSaveSelection" />
+                <Button fx:id="cancelButton" text="Cancel" onAction="#handleCancel" />
+            </children>
+        </HBox>
+    </children>
+</AnchorPane> 
