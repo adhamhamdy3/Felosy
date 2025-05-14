@@ -1,204 +1,554 @@
 package felosy.controllers;
 
-import felosy.App;
 import felosy.assetmanagement.Gold;
+import felosy.assetmanagement.Portfolio;
+import felosy.storage.DataStorage;
 import felosy.services.GoldDataService;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URL;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
-import java.util.ResourceBundle;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-public class AssetsController implements Initializable {
-
-    @FXML private TableView<Gold> goldTable;
-    @FXML private TableColumn<Gold, String> idColumn;
-    @FXML private TableColumn<Gold, String> nameColumn;
-    @FXML private TableColumn<Gold, BigDecimal> gramsColumn;
-    @FXML private TableColumn<Gold, BigDecimal> purityColumn;
-    @FXML private TableColumn<Gold, BigDecimal> priceColumn;
-
+/**
+ * Controller for managing different types of assets (Gold, Cryptocurrency, Real Estate, Stock)
+ * Provides UI functionality for viewing, adding, editing, and deleting assets
+ */
+public class AssetsController {
+    // Top section
     @FXML private RadioButton radio_gold;
     @FXML private RadioButton radio_crypto;
     @FXML private RadioButton radio_realEstate;
     @FXML private RadioButton radio_Stock;
-    @FXML private Button btn_add;
     @FXML private Button btn_back;
-    @FXML private Button btn_delete;
-    private ToggleGroup assetTypeGroup;
-    @FXML private TextField txt_grams;
+    @FXML private Text errorText;
+    @FXML private ToggleGroup assetTypeGroup;
+
+    // Table
+    @FXML private TableView<Gold> goldTable;
+    @FXML private TableColumn<Gold, String> idColumn;
+    @FXML private TableColumn<Gold, String> nameColumn;
+    @FXML private TableColumn<Gold, Date> purchaseDateColumn;
+    @FXML private TableColumn<Gold, BigDecimal> gramsColumn;
+    @FXML private TableColumn<Gold, BigDecimal> purityColumn;
+    @FXML private TableColumn<Gold, BigDecimal> priceColumn;
+    @FXML private TableColumn<Gold, BigDecimal> purchasePriceColumn;
+    @FXML private TableColumn<Gold, Void> actionsColumn;
+
+    // Bottom form
     @FXML private TextField txt_name;
+    @FXML private TextField txt_grams;
     @FXML private TextField txt_purity;
-    @FXML private Text loginErrorText;
+    @FXML private TextField txt_purchasePrice;
+    @FXML private DatePicker date_purchase;
+    @FXML private Button btn_add;
 
-    private GoldDataService goldDataService = GoldDataService.getInstance();
-    private String currentUserId; // Will store the current user's ID
+    // Data model
+    private ObservableList<Gold> goldItems = FXCollections.observableArrayList();
 
+    // Current portfolio ID
+    private String currentPortfolioId;
 
-    private ObservableList<Gold> goldList = FXCollections.observableArrayList();
+    // Default current user ID (would be set from login)
+    private String currentUserId = "default-user";
 
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        // Get current user's ID from the App class
-        currentUserId = App.getCurrentUser().getUserId();
+    @FXML
+    public void initialize() {
+        // Setup radio button listeners
+        radio_gold.setSelected(true);
 
-        // Get the user's gold list from the service
-        goldList = goldDataService.getUserGoldList(currentUserId);
+        // Initialize the table columns
+        setupGoldTable();
 
-        // Set up the table
-        setupTable();
-        setupButtons();
+        // Setup add button
+        btn_add.setOnAction(e -> showAddGoldDialog());
 
-        // Bind the table to the goldList
-        goldTable.setItems(goldList);
+        // Load gold data from storage
+        loadGoldDataFromStorage();
     }
 
+    /**
+     * Set the current portfolio ID and load its assets
+     *
+     * @param portfolioId The portfolio ID to load
+     */
+    public void setCurrentPortfolioId(String portfolioId) {
+        this.currentPortfolioId = portfolioId;
+        loadGoldDataFromStorage();
+    }
 
+    /**
+     * Set the current user ID
+     *
+     * @param userId The current user ID
+     */
+    public void setCurrentUserId(String userId) {
+        this.currentUserId = userId;
+        // Reload data for the new user
+        loadGoldDataFromStorage();
+    }
 
-    private void setupTable() {
-        // Configure the columns
+    /**
+     * Setup the gold table columns and formatters
+     */
+    private void setupGoldTable() {
+        // Configure table columns
         idColumn.setCellValueFactory(new PropertyValueFactory<>("assetId"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        purchaseDateColumn.setCellValueFactory(new PropertyValueFactory<>("purchaseDate"));
         gramsColumn.setCellValueFactory(new PropertyValueFactory<>("weightGrams"));
-        purityColumn.setCellValueFactory(new PropertyValueFactory<>("purity"));
+        purityColumn.setCellValueFactory(cellData -> {
+            BigDecimal purity = cellData.getValue().getPurity();
+            return new SimpleObjectProperty<>(purity);
+        });
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("currentValue"));
+        purchasePriceColumn.setCellValueFactory(new PropertyValueFactory<>("purchasePrice"));
+
+        // Setup custom cell formats
+        purchaseDateColumn.setCellFactory(column -> new TableCell<Gold, Date>() {
+            @Override
+            protected void updateItem(Date date, boolean empty) {
+                super.updateItem(date, empty);
+                if (empty || date == null) {
+                    setText(null);
+                } else {
+                    setText(date.toString());
+                }
+            }
+        });
+
+        purityColumn.setCellFactory(column -> new TableCell<Gold, BigDecimal>() {
+            @Override
+            protected void updateItem(BigDecimal purity, boolean empty) {
+                super.updateItem(purity, empty);
+                if (empty || purity == null) {
+                    setText(null);
+                } else {
+                    // Display as decimal and karat
+                    BigDecimal karatValue = purity.multiply(new BigDecimal("24"));
+                    setText(String.format("%.2f (%.1fK)", purity.doubleValue(), karatValue.doubleValue()));
+                }
+            }
+        });
+
+        priceColumn.setCellFactory(column -> new TableCell<Gold, BigDecimal>() {
+            @Override
+            protected void updateItem(BigDecimal price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%.2f", price.doubleValue()));
+                }
+            }
+        });
+
+        purchasePriceColumn.setCellFactory(column -> new TableCell<Gold, BigDecimal>() {
+            @Override
+            protected void updateItem(BigDecimal price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%.2f", price.doubleValue()));
+                }
+            }
+        });
+
+        // Setup action column with Edit and Delete buttons
+        setupActionsColumn();
+
+        // Bind the table to the data model
+        goldTable.setItems(goldItems);
     }
 
+    /**
+     * Setup the actions column with Edit and Delete buttons
+     */
+    private void setupActionsColumn() {
+        actionsColumn.setCellFactory(param -> new TableCell<>() {
+            private final Button editButton = new Button("Edit");
+            private final Button deleteButton = new Button("Delete");
+            private final HBox pane = new HBox(5, editButton, deleteButton);
 
-    private void setupButtons() {
-        btn_add.setOnAction(e -> handleAddGold());
-        btn_delete.setOnAction(e -> handleDeleteGold());
-        btn_back.setOnAction(e -> handleBack());
-        
-        // Setup radio buttons with toggle group
-        assetTypeGroup = new ToggleGroup();
-        radio_gold.setToggleGroup(assetTypeGroup);
-        radio_crypto.setToggleGroup(assetTypeGroup);
-        radio_realEstate.setToggleGroup(assetTypeGroup);
-        radio_Stock.setToggleGroup(assetTypeGroup);
-        radio_gold.setSelected(true);
-        
-        // Add listener to handle navigation when radio selection changes
-        assetTypeGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal == radio_crypto) {
-                SceneHandler.switchToCrypto();
-            } else if (newVal == radio_realEstate) {
-                SceneHandler.switchToRealEstate();
-            } else if (newVal == radio_Stock) {
-                SceneHandler.switchToStock();
+            {
+                // Edit button action
+                editButton.setOnAction(event -> {
+                    Gold gold = getTableView().getItems().get(getIndex());
+                    showEditDialog(gold);
+                });
+
+                // Delete button action
+                deleteButton.setOnAction(event -> {
+                    Gold gold = getTableView().getItems().get(getIndex());
+                    handleDeleteGold(gold);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : pane);
             }
         });
     }
 
-    private String generateEightDigitId() {
-        // Generate random number between 10000000 and 99999999
-        int randomNum = 10000000 + (int)(Math.random() * 90000000);
-        return String.valueOf(randomNum);
-    }
-
-    private void handleCrypto() {
-        SceneHandler.switchToCrypto();
-    }
-
-    private void handleRealState() {
-        SceneHandler.switchToRealEstate();
-    }
-
-    private void handleStock() {
-        SceneHandler.switchToStock();
-    }
-
-    private void handleAddGold() {
+    /**
+     * Show dialog for adding a new gold asset
+     */
+    private void showAddGoldDialog() {
         try {
-            // Input validation
-            if (txt_name.getText().isEmpty()) {
-                showAlert("Error", "Name cannot be empty");
-                return;
+            // Create a dialog
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("Add Gold Asset");
+            dialog.setHeaderText("Enter gold asset details");
+
+            // Set the button types
+            ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+            dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+            // Create the form fields
+            TextField nameField = new TextField();
+            nameField.setPromptText("Name");
+            
+            TextField gramsField = new TextField();
+            gramsField.setPromptText("Grams");
+            
+            TextField purityField = new TextField();
+            purityField.setPromptText("Purity (0->1)");
+            
+            TextField purchasePriceField = new TextField();
+            purchasePriceField.setPromptText("Purchase Price ($)");
+            
+            DatePicker purchaseDatePicker = new DatePicker();
+            purchaseDatePicker.setPromptText("Purchase Date");
+
+            // Layout the form
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20, 150, 10, 10));
+
+            grid.add(new Label("Name:"), 0, 0);
+            grid.add(nameField, 1, 0);
+            grid.add(new Label("Weight (grams):"), 0, 1);
+            grid.add(gramsField, 1, 1);
+            grid.add(new Label("Purity (0->1):"), 0, 2);
+            grid.add(purityField, 1, 2);
+            grid.add(new Label("Purchase Price ($):"), 0, 3);
+            grid.add(purchasePriceField, 1, 3);
+            grid.add(new Label("Purchase Date:"), 0, 4);
+            grid.add(purchaseDatePicker, 1, 4);
+
+            dialog.getDialogPane().setContent(grid);
+
+            // Request focus on the name field by default
+            nameField.requestFocus();
+
+            // Process the result
+            Optional<ButtonType> result = dialog.showAndWait();
+            if (result.isPresent() && result.get() == saveButtonType) {
+                // Validate input fields
+                if (nameField.getText().isEmpty() || gramsField.getText().isEmpty() || 
+                    purityField.getText().isEmpty() || purchasePriceField.getText().isEmpty() ||
+                    purchaseDatePicker.getValue() == null) {
+                    showError("All fields are required");
+                    return;
+                }
+
+                String name = nameField.getText();
+                BigDecimal grams = new BigDecimal(gramsField.getText());
+                BigDecimal purity = new BigDecimal(purityField.getText());
+                BigDecimal purchasePrice = new BigDecimal(purchasePriceField.getText());
+                Date purchaseDate = Date.from(purchaseDatePicker.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+                // Validate values
+                if (grams.compareTo(BigDecimal.ZERO) <= 0) {
+                    showError("Weight must be greater than 0");
+                    return;
+                }
+
+                if (purity.compareTo(BigDecimal.ZERO) < 0 || purity.compareTo(BigDecimal.ONE) > 0) {
+                    showError("Purity must be between 0 and 1");
+                    return;
+                }
+
+                if (purchasePrice.compareTo(BigDecimal.ZERO) <= 0) {
+                    showError("Purchase price must be greater than 0");
+                    return;
+                }
+
+                // Generate unique ID for the new gold asset
+                String assetId = UUID.randomUUID().toString().substring(0, 8);
+
+                // Create a new Gold asset
+                Gold newGold = new Gold(assetId, name, purchaseDate, purchasePrice, purchasePrice, grams, purity);
+
+                // Add to table and save
+                goldItems.add(newGold);
+                saveGoldDataToStorage();
+                hideError();
             }
-
-            // Parse inputs
-            String name = txt_name.getText();
-            BigDecimal grams = new BigDecimal(txt_grams.getText());
-            BigDecimal purity = new BigDecimal(txt_purity.getText());
-
-            // Validate purity range
-            if (purity.compareTo(BigDecimal.ZERO) < 0 || purity.compareTo(BigDecimal.ONE) > 0) {
-                showAlert("Error", "Purity must be between 0 and 1");
-                return;
-            }
-
-            // Create new Gold asset
-            String assetId = generateEightDigitId();
-            Date purchaseDate = new Date();
-            BigDecimal purchasePrice = grams.multiply(new BigDecimal("50")); // Example price calculation
-            BigDecimal currentValue = purchasePrice; // Initially same as purchase price
-
-            Gold newGold = new Gold(assetId, name, purchaseDate, purchasePrice, currentValue, grams, purity);
-
-            // Add to the observable list
-            goldList.add(newGold);
-
-            // Save the updated list to the service
-            goldDataService.saveUserGoldList(currentUserId, goldList);
-
-            // Clear input fields
-            clearInputFields();
-
         } catch (NumberFormatException e) {
-            showAlert("Error", "Please enter valid numbers for grams and purity");
+            showError("Invalid number format");
         } catch (IllegalArgumentException e) {
-            showAlert("Error", e.getMessage());
+            showError(e.getMessage());
+        } catch (Exception e) {
+            showError("An error occurred: " + e.getMessage());
         }
     }
 
+    /**
+     * Handle deleting a gold asset
+     *
+     * @param gold The gold asset to delete
+     */
+    private void handleDeleteGold(Gold gold) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Delete");
+        alert.setHeaderText("Delete Gold Asset");
+        alert.setContentText("Are you sure you want to delete " + gold.getName() + "?");
 
-    private void handleDeleteGold() {
-        Gold selectedGold = goldTable.getSelectionModel().getSelectedItem();
-        if (selectedGold != null) {
-            goldList.remove(selectedGold);
-            clearInputFields();
-        } else {
-            showAlert("Error", "Please select an item to delete");
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            goldItems.remove(gold);
+            saveGoldDataToStorage();
         }
     }
 
-    private void displaySelectedGold(Gold gold) {
-        txt_name.setText(gold.getName());
-        txt_grams.setText(gold.getWeightGrams().toString());
-        txt_purity.setText(gold.getPurity().toString());
+    /**
+     * Show dialog for editing a gold asset
+     *
+     * @param gold The gold asset to edit
+     */
+    private void showEditDialog(Gold gold) {
+        // Create a dialog for editing
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Gold Asset");
+        dialog.setHeaderText("Update gold asset details");
+
+        // Set the button types
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        // Create the form fields
+        TextField nameField = new TextField(gold.getName());
+        TextField gramsField = new TextField(gold.getWeightGrams().toString());
+        TextField purityField = new TextField(gold.getPurity().toString());
+
+        // Additional fields for advanced editing
+        DatePicker purchaseDatePicker = new DatePicker();
+        // Convert Date to LocalDate
+        if (gold.getPurchaseDate() != null) {
+            LocalDate purchaseLocalDate = gold.getPurchaseDate().toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+            purchaseDatePicker.setValue(purchaseLocalDate);
+        }
+
+        TextField purchasePriceField = new TextField(gold.getPurchasePrice().toString());
+        TextField currentValueField = new TextField(gold.getCurrentValue().toString());
+
+        // Layout the form
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(new Label("Name:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label("Weight (grams):"), 0, 1);
+        grid.add(gramsField, 1, 1);
+        grid.add(new Label("Purity (0->1):"), 0, 2);
+        grid.add(purityField, 1, 2);
+        grid.add(new Label("Purchase Date:"), 0, 3);
+        grid.add(purchaseDatePicker, 1, 3);
+        grid.add(new Label("Purchase Price ($):"), 0, 4);
+        grid.add(purchasePriceField, 1, 4);
+        grid.add(new Label("Current Value ($):"), 0, 5);
+        grid.add(currentValueField, 1, 5);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // Request focus on the name field by default
+        nameField.requestFocus();
+
+        // Process the result
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isPresent() && result.get() == saveButtonType) {
+            try {
+                // Update the gold asset with new values
+                gold.setName(nameField.getText());
+                gold.setWeightGrams(new BigDecimal(gramsField.getText()));
+                gold.setPurity(new BigDecimal(purityField.getText()));
+
+                // Update additional fields
+                if (purchaseDatePicker.getValue() != null) {
+                    Date purchaseDate = Date.from(purchaseDatePicker.getValue().atStartOfDay()
+                            .atZone(ZoneId.systemDefault())
+                            .toInstant());
+                    gold.setPurchaseDate(purchaseDate);
+                }
+
+                gold.setPurchasePrice(new BigDecimal(purchasePriceField.getText()));
+                gold.setCurrentValue(new BigDecimal(currentValueField.getText()));
+
+                // Refresh the table
+                goldTable.refresh();
+
+                // Save changes to storage
+                saveGoldDataToStorage();
+
+            } catch (NumberFormatException e) {
+                showError("Invalid number format");
+            } catch (IllegalArgumentException e) {
+                showError(e.getMessage());
+            }
+        }
     }
 
-    private void clearInputFields() {
-        txt_name.clear();
-        txt_grams.clear();
-        txt_purity.clear();
+    /**
+     * Show an error message
+     *
+     * @param message The error message to display
+     */
+    private void showError(String message) {
+        errorText.setText(message);
+        errorText.setVisible(true);
     }
 
-    private void showBackError(String errorMessage) {
-        loginErrorText.setText(errorMessage);
-        loginErrorText.setVisible(true);
+    /**
+     * Hide the error message
+     */
+    private void hideError() {
+        errorText.setVisible(false);
     }
 
+    /**
+     * Show an error for unimplemented features
+     *
+     * @param message The error message to display
+     */
+    private void showNotImplementedError(String message) {
+        showError(message);
+        // Reset selection to gold
+        radio_gold.setSelected(true);
+    }
+
+    /**
+     * Load gold data from the data storage system
+     */
+    private void loadGoldDataFromStorage() {
+        // Clear current items
+        goldItems.clear();
+
+        try {
+            // Get the user's gold list from the service
+            ObservableList<Gold> userGoldList = GoldDataService.getInstance().getUserGoldList(currentUserId);
+            goldItems.addAll(userGoldList);
+        } catch (Exception e) {
+            showError("Failed to load gold data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Save gold data to the data storage system
+     */
+    private void saveGoldDataToStorage() {
+        try {
+            // Save the current gold items to the service
+            GoldDataService.getInstance().saveUserGoldList(currentUserId, goldItems);
+        } catch (Exception e) {
+            showError("Failed to save gold data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Handle switching to the dashboard view
+     */
     @FXML
-    private void handleBack() {
-        SceneHandler.switchToDashboard();
+    public void handleBack(ActionEvent event) {
+        try {
+            // Save any pending changes before leaving
+            saveGoldDataToStorage();
+            // Switch to dashboard
+            SceneHandler.switchToDashboard();
+        } catch (Exception e) {
+            showError("Failed to return to dashboard: " + e.getMessage());
+        }
     }
 
+    /**
+     * Switch to Gold assets view
+     */
+    @FXML
+    public void switchToGold(ActionEvent event) {
+        hideError();
+        // Gold view is already loaded
+    }
 
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setContentText(content);
-        alert.showAndWait();
+    /**
+     * Switch to Cryptocurrency assets view
+     */
+    @FXML
+    public void switchToCrypto(ActionEvent event) {
+        try {
+            // Save any pending changes before switching
+            saveGoldDataToStorage();
+            // Switch to crypto view
+            SceneHandler.switchToCrypto();
+        } catch (Exception e) {
+            showError("Failed to switch to cryptocurrency view: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Switch to Real Estate assets view
+     */
+    @FXML
+    public void switchToRealEstate(ActionEvent event) {
+        try {
+            // Save any pending changes before switching
+            saveGoldDataToStorage();
+            // Switch to real estate view
+            SceneHandler.switchToRealEstate();
+        } catch (Exception e) {
+            showError("Failed to switch to real estate view: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Switch to Stock assets view
+     */
+    @FXML
+    public void switchToStock(ActionEvent event) {
+        try {
+            // Save any pending changes before switching
+            saveGoldDataToStorage();
+            // Switch to stock view
+            SceneHandler.switchToStock();
+        } catch (Exception e) {
+            showError("Failed to switch to stock view: " + e.getMessage());
+        }
     }
 }

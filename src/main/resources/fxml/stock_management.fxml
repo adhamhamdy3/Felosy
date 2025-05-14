@@ -16,50 +16,71 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.StockController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1150.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.StockController">
     <top>
         <VBox BorderPane.alignment="CENTER">
             <children>
                 <Label text="Assets Management (Stocks)">
                     <font>
-                        <Font size="17.0" />
+                        <Font size="20.0" />
                     </font>
                     <VBox.margin>
-                        <Insets left="30.0" top="5.0" />
+                        <Insets bottom="10.0" left="30.0" top="15.0" />
                     </VBox.margin>
                 </Label>
-                <HBox>
+                <HBox alignment="CENTER_LEFT">
                     <children>
-                        <RadioButton fx:id="radio_gold" mnemonicParsing="false" text="Gold">
+                        <fx:define>
+                            <ToggleGroup fx:id="assetTypeGroup" />
+                        </fx:define>
+                        <RadioButton fx:id="radio_gold" mnemonicParsing="false" text="Gold" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" left="30.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
-                        <RadioButton fx:id="radio_crypto" mnemonicParsing="false" text="Cryptocurrency">
+                        <RadioButton fx:id="radio_crypto" mnemonicParsing="false" text="Cryptocurrency" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
-                        <RadioButton fx:id="radio_realEstate" mnemonicParsing="false" text="Real Estate">
+                        <RadioButton fx:id="radio_realEstate" mnemonicParsing="false" text="Real Estate" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
-                        <RadioButton fx:id="radio_Stock" mnemonicParsing="false" selected="true" text="Stock">
+                        <RadioButton fx:id="radio_Stock" mnemonicParsing="false" selected="true" text="Stock" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
                         <Region HBox.hgrow="ALWAYS" />
                         <Text fx:id="errorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" text="Error" visible="false">
                             <HBox.margin>
-                                <Insets top="11.0" />
+                                <Insets right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </Text>
                         <Button fx:id="btn_back" mnemonicParsing="false" onAction="#handleBack" text="Back to Main">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="30.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </Button>
                     </children>
                 </HBox>
@@ -69,47 +90,57 @@
     <center>
         <TableView fx:id="stockTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <columns>
-                <TableColumn fx:id="idColumn" prefWidth="80.0" text="ID" />
+                <TableColumn fx:id="idColumn" prefWidth="70.0" text="ID" />
                 <TableColumn fx:id="nameColumn" prefWidth="120.0" text="Name" />
-                <TableColumn fx:id="tickerColumn" prefWidth="80.0" text="Ticker" />
-                <TableColumn fx:id="exchangeColumn" prefWidth="100.0" text="Exchange" />
-                <TableColumn fx:id="sharesColumn" prefWidth="100.0" text="Shares" />
-                <TableColumn fx:id="currentPriceColumn" prefWidth="100.0" text="Current Price" />
-                <TableColumn fx:id="totalValueColumn" prefWidth="120.0" text="Total Value" />
-                <TableColumn fx:id="dividendYieldColumn" prefWidth="100.0" text="Dividend Yield" />
-                <TableColumn fx:id="epsColumn" prefWidth="80.0" text="EPS" />
+                <TableColumn fx:id="tickerColumn" prefWidth="70.0" text="Ticker" />
+                <TableColumn fx:id="exchangeColumn" prefWidth="80.0" text="Exchange" />
+                <TableColumn fx:id="sharesColumn" prefWidth="60.0" text="Shares" />
+                <TableColumn fx:id="purchaseDateColumn" prefWidth="100.0" text="Purchase Date" />
+                <TableColumn fx:id="purchasePriceColumn" prefWidth="100.0" text="Purchase Price" />
+                <TableColumn fx:id="pricePerShareColumn" prefWidth="90.0" text="Price/Share" />
+                <TableColumn fx:id="totalValueColumn" prefWidth="100.0" text="Total Value" />
+                <TableColumn fx:id="dividendYieldColumn" prefWidth="100.0" text="Dividend Yield (%)" />
+                <TableColumn fx:id="epsColumn" prefWidth="70.0" text="EPS" />
+                <TableColumn fx:id="peRatioColumn" prefWidth="80.0" text="P/E Ratio" />
+                <TableColumn fx:id="annualDividendColumn" prefWidth="110.0" text="Annual Dividend" />
+                <TableColumn fx:id="returnPercentageColumn" prefWidth="90.0" text="Return %" />
+                <TableColumn fx:id="actionsColumn" prefWidth="150.0" text="Actions" />
             </columns>
+            <BorderPane.margin>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+            </BorderPane.margin>
         </TableView>
     </center>
     <bottom>
-        <VBox spacing="10" BorderPane.alignment="CENTER">
+        <HBox alignment="CENTER_LEFT" spacing="15.0" BorderPane.alignment="CENTER">
             <children>
-                <HBox spacing="10">
-                    <children>
-                        <TextField fx:id="txt_name" prefHeight="26.0" prefWidth="120.0" promptText="Name" />
-                        <ComboBox fx:id="tickerComboBox" prefWidth="100.0" promptText="Ticker" />
-                        <TextField fx:id="txt_exchange" prefHeight="26.0" prefWidth="100.0" promptText="Exchange" />
-                        <TextField fx:id="txt_shares" prefHeight="26.0" prefWidth="80.0" promptText="Shares" />
-                    </children>
-                    <padding>
-                        <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
-                    </padding>
-                </HBox>
-                <HBox spacing="10">
-                    <children>
-                        <TextField fx:id="txt_price" prefHeight="26.0" prefWidth="100.0" promptText="Price" />
-                        <TextField fx:id="txt_dividendYield" prefHeight="26.0" prefWidth="100.0" promptText="Dividend Yield" />
-                        <TextField fx:id="txt_eps" prefHeight="26.0" prefWidth="80.0" promptText="EPS" />
-                        <Button fx:id="btn_add" mnemonicParsing="false" onAction="#handleAddStock" text="Add" />
-                        <Button fx:id="btn_buy" mnemonicParsing="false" onAction="#handleBuyShares" text="Buy Shares" />
-                        <Button fx:id="btn_sell" mnemonicParsing="false" onAction="#handleSellShares" text="Sell Shares" />
-                        <Button fx:id="btn_delete" mnemonicParsing="false" onAction="#handleDeleteStock" text="Delete" />
-                    </children>
-                    <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
-                    </padding>
-                </HBox>
+                <Button fx:id="btn_add" mnemonicParsing="false" onAction="#handleAddStock" prefHeight="30.0" text="Add Stock">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
+                <Button fx:id="btn_buy" mnemonicParsing="false" onAction="#handleBuyShares" prefHeight="30.0" text="Buy Shares">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
+                <Button fx:id="btn_sell" mnemonicParsing="false" onAction="#handleSellShares" prefHeight="30.0" text="Sell Shares">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
+                <Button fx:id="btn_delete" mnemonicParsing="false" onAction="#handleDeleteStock" prefHeight="30.0" text="Delete Selected">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
             </children>
-        </VBox>
+            <padding>
+                <Insets bottom="15.0" left="30.0" right="30.0" top="5.0" />
+            </padding>
+            <BorderPane.margin>
+                <Insets bottom="10.0" />
+            </BorderPane.margin>
+        </HBox>
     </bottom>
 </BorderPane>

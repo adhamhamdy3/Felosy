@@ -16,50 +16,71 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.RealEstateController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="felosy.controllers.RealEstateController">
     <top>
         <VBox BorderPane.alignment="CENTER">
             <children>
                 <Label text="Assets Management (Real Estate)">
                     <font>
-                        <Font size="17.0" />
+                        <Font size="20.0" />
                     </font>
                     <VBox.margin>
-                        <Insets left="30.0" top="5.0" />
+                        <Insets bottom="10.0" left="30.0" top="15.0" />
                     </VBox.margin>
                 </Label>
-                <HBox>
+                <HBox alignment="CENTER_LEFT">
                     <children>
-                        <RadioButton fx:id="radio_gold" mnemonicParsing="false" text="Gold">
+                        <fx:define>
+                            <ToggleGroup fx:id="assetTypeGroup" />
+                        </fx:define>
+                        <RadioButton fx:id="radio_gold" mnemonicParsing="false" text="Gold" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" left="30.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
-                        <RadioButton fx:id="radio_crypto" mnemonicParsing="false" text="Cryptocurrency">
+                        <RadioButton fx:id="radio_crypto" mnemonicParsing="false" text="Cryptocurrency" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
-                        <RadioButton fx:id="radio_realEstate" mnemonicParsing="false" selected="true" text="Real Estate">
+                        <RadioButton fx:id="radio_realEstate" mnemonicParsing="false" selected="true" text="Real Estate" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
-                        <RadioButton fx:id="radio_Stock" mnemonicParsing="false" text="Stock">
+                        <RadioButton fx:id="radio_Stock" mnemonicParsing="false" text="Stock" toggleGroup="$assetTypeGroup">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </RadioButton>
                         <Region HBox.hgrow="ALWAYS" />
                         <Text fx:id="errorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" text="Error" visible="false">
                             <HBox.margin>
-                                <Insets top="11.0" />
+                                <Insets right="15.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </Text>
                         <Button fx:id="btn_back" mnemonicParsing="false" onAction="#handleBack" text="Back to Main">
                             <HBox.margin>
-                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                <Insets bottom="8.0" right="30.0" top="8.0" />
                             </HBox.margin>
+                            <font>
+                                <Font size="14.0" />
+                            </font>
                         </Button>
                     </children>
                 </HBox>
@@ -71,40 +92,36 @@
             <columns>
                 <TableColumn fx:id="idColumn" prefWidth="80.0" text="ID" />
                 <TableColumn fx:id="nameColumn" prefWidth="100.0" text="Name" />
-                <TableColumn fx:id="locationColumn" prefWidth="120.0" text="Location" />
-                <TableColumn fx:id="propertyTypeColumn" prefWidth="120.0" text="Property Type" />
-                <TableColumn fx:id="areaColumn" prefWidth="100.0" text="Area (m²)" />
-                <TableColumn fx:id="rentalIncomeColumn" prefWidth="120.0" text="Monthly Rental" />
-                <TableColumn fx:id="valueColumn" prefWidth="120.0" text="Current Value" />
+                <TableColumn fx:id="locationColumn" prefWidth="100.0" text="Location" />
+                <TableColumn fx:id="propertyTypeColumn" prefWidth="100.0" text="Property Type" />
+                <TableColumn fx:id="areaColumn" prefWidth="80.0" text="Area (m²)" />
+                <TableColumn fx:id="rentalIncomeColumn" prefWidth="100.0" text="Monthly Rental" />
+                <TableColumn fx:id="occupancyRateColumn" prefWidth="80.0" text="Occupancy %" />
+                <TableColumn fx:id="purchaseDateColumn" prefWidth="100.0" text="Purchase Date" />
+                <TableColumn fx:id="purchasePriceColumn" prefWidth="100.0" text="Purchase Price" />
+                <TableColumn fx:id="valueColumn" prefWidth="100.0" text="Current Value" />
+                <TableColumn fx:id="propertyTaxColumn" prefWidth="100.0" text="Annual Tax" />
+                <TableColumn fx:id="maintenanceCostColumn" prefWidth="100.0" text="Annual Maintenance" />
+                <TableColumn fx:id="insuranceCostColumn" prefWidth="100.0" text="Annual Insurance" />
+                <TableColumn fx:id="actionsColumn" prefWidth="160.0" text="Actions" />
             </columns>
+            <BorderPane.margin>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+            </BorderPane.margin>
         </TableView>
     </center>
     <bottom>
-        <VBox spacing="10" BorderPane.alignment="CENTER">
+        <HBox alignment="CENTER_RIGHT" spacing="10.0" BorderPane.alignment="CENTER">
             <children>
-                <HBox spacing="10">
-                    <children>
-                        <TextField fx:id="txt_name" prefHeight="26.0" prefWidth="120.0" promptText="Name" />
-                        <TextField fx:id="txt_location" prefHeight="26.0" prefWidth="120.0" promptText="Location" />
-                        <ComboBox fx:id="propertyTypeComboBox" prefWidth="150.0" promptText="Property Type" />
-                        <TextField fx:id="txt_area" prefHeight="26.0" prefWidth="100.0" promptText="Area (m²)" />
-                    </children>
-                    <padding>
-                        <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
-                    </padding>
-                </HBox>
-                <HBox spacing="10">
-                    <children>
-                        <TextField fx:id="txt_rentalIncome" prefHeight="26.0" prefWidth="120.0" promptText="Monthly Rental" />
-                        <TextField fx:id="txt_occupancyRate" prefHeight="26.0" prefWidth="120.0" promptText="Occupancy Rate" />
-                        <Button fx:id="btn_add" mnemonicParsing="false" onAction="#handleAddRealEstate" text="Add" />
-                        <Button fx:id="btn_delete" mnemonicParsing="false" onAction="#handleDeleteRealEstate" text="Delete" />
-                    </children>
-                    <padding>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
-                    </padding>
-                </HBox>
+                <Button fx:id="btn_add" mnemonicParsing="false" onAction="#handleAddRealEstate" prefHeight="30.0" text="Add Real Estate">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
             </children>
-        </VBox>
+            <padding>
+                <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+            </padding>
+        </HBox>
     </bottom>
 </BorderPane>
