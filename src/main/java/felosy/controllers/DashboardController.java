@@ -86,24 +86,39 @@ public class DashboardController {
             String format = arr[0];
             String path = arr[1];
             if ("PDF".equalsIgnoreCase(format)) {
-                // Example: get current user and portfolio, then create and export the report
+                // Get current user
                 felosy.authentication.User user = App.getCurrentUser();
-                felosy.assetmanagement.Portfolio portfolio = App.getCurrentPortfolio();
-                if (user != null && portfolio == null) {
-                    // Create and save a default portfolio for the user
-                    portfolio = new felosy.assetmanagement.Portfolio(user.getUserId());
-                    felosy.storage.DataStorage.savePortfolio(portfolio);
-                    // Re-fetch to ensure it's loaded as expected
-                    portfolio = App.getCurrentPortfolio();
-                }
-                if (user != null && portfolio != null) {
+                if (user != null) {
+                    // Gather all assets for the user
+                    String userId = user.getUserId();
+                    java.util.List<felosy.assetmanagement.Gold> goldList = new java.util.ArrayList<>(felosy.services.GoldDataService.getInstance().getUserGoldList(userId));
+                    java.util.List<felosy.assetmanagement.Stock> stockList = new java.util.ArrayList<>(felosy.services.StockDataService.getInstance().getUserStockList(userId));
+                    java.util.List<felosy.assetmanagement.Cryptocurrency> cryptoList = new java.util.ArrayList<>(felosy.services.CryptoDataService.getInstance().getUserCryptoList(userId));
+                    java.util.List<felosy.assetmanagement.RealEstate> realEstateList = new java.util.ArrayList<>(felosy.services.RealEstateDataService.getInstance().getUserRealEstateList(userId));
+
+                    // Aggregate all assets into a single portfolio
+                    felosy.assetmanagement.Portfolio reportPortfolio = new felosy.assetmanagement.Portfolio(userId);
+                    for (felosy.assetmanagement.Gold gold : goldList) {
+                        reportPortfolio.addAsset(gold);
+                    }
+                    for (felosy.assetmanagement.Stock stock : stockList) {
+                        reportPortfolio.addAsset(stock);
+                    }
+                    for (felosy.assetmanagement.Cryptocurrency crypto : cryptoList) {
+                        reportPortfolio.addAsset(crypto);
+                    }
+                    for (felosy.assetmanagement.RealEstate realEstate : realEstateList) {
+                        reportPortfolio.addAsset(realEstate);
+                    }
+
+                    // Create and export the report
                     felosy.reporting.Report report = new felosy.reporting.Report(
                         java.util.UUID.randomUUID().toString(),
-                        "Portfolio Report",
+                        "Full User Report",
                         new java.util.Date(),
                         user
                     );
-                    report.setPortfolio(portfolio);
+                    report.setPortfolio(reportPortfolio);
                     report.setFormat(felosy.reporting.Report.ReportFormat.PDF);
                     boolean success = report.exportAsPDF(path);
                     if (success) {
@@ -123,7 +138,7 @@ public class DashboardController {
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
                     alert.setTitle("Export Failed");
                     alert.setHeaderText(null);
-                    alert.setContentText("User or portfolio not found.");
+                    alert.setContentText("User not found.");
                     alert.showAndWait();
                 }
             } else {
