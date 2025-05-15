@@ -12,6 +12,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.CheckBox;
 
 import java.io.IOException;
 import java.net.URL;
@@ -44,6 +46,20 @@ public class ZakatAndComplianceController implements Initializable {
     private TextField gold_field;
     @FXML
     private TextField silver_field;
+    @FXML
+    private ProgressBar complianceProgress;
+    @FXML
+    private Label compliancePercentage;
+    @FXML
+    private CheckBox financialRecordsCheck;
+    @FXML
+    private CheckBox assetVerificationCheck;
+    @FXML
+    private CheckBox taxFilingCheck;
+    @FXML
+    private CheckBox zakatEligibilityCheck;
+    @FXML
+    private TextField complianceNotes;
 
     private List<Asset> selectedAssets = new ArrayList<>();
 
@@ -127,6 +143,8 @@ public class ZakatAndComplianceController implements Initializable {
             System.out.println("No assets selected for Zakat calculation.");
             gold_field.setText("0.00");
             silver_field.setText("0.00");
+            // Reset compliance UI
+            updateComplianceUI(false, 0.0f);
             return;
         }
         ZakatCalculator calculator = new ZakatCalculator("user-portfolio", selectedAssets);
@@ -149,6 +167,10 @@ public class ZakatAndComplianceController implements Initializable {
         }
         gold_field.setText(String.format("%.2f", stockZakat));
         silver_field.setText(String.format("%.2f", cryptoZakat));
+        // Update compliance UI
+        boolean isCompliant = calculator.checkCompliance();
+        float compliancePercent = isCompliant ? 1.0f : 0.5f; // Example: 100% if compliant, 50% if not
+        updateComplianceUI(isCompliant, compliancePercent);
         // TODO: Display results in the UI (e.g., in a label or dialog)
     }
 
@@ -194,5 +216,24 @@ public class ZakatAndComplianceController implements Initializable {
         double silverPrice = silverPriceUSD * rate;
         curr_per_gram_label.setText(String.format("%.2f %s / gram", goldPrice, symbol));
         curr_per_silver.setText(String.format("%.2f %s / gram", silverPrice, symbol));
+    }
+
+    /**
+     * Update the compliance UI section based on compliance logic
+     */
+    private void updateComplianceUI(boolean isCompliant, float percent) {
+        if (complianceProgress != null) {
+            complianceProgress.setProgress(percent);
+        }
+        if (compliancePercentage != null) {
+            compliancePercentage.setText(String.format("%d%%", (int)(percent * 100)));
+        }
+        // Example: set checkboxes based on compliance (customize as needed)
+        if (financialRecordsCheck != null) financialRecordsCheck.setSelected(isCompliant);
+        if (assetVerificationCheck != null) assetVerificationCheck.setSelected(isCompliant);
+        if (taxFilingCheck != null) taxFilingCheck.setSelected(isCompliant);
+        if (zakatEligibilityCheck != null) zakatEligibilityCheck.setSelected(isCompliant);
+        // Optionally clear or keep notes
+        // if (complianceNotes != null) complianceNotes.setText("");
     }
 }
