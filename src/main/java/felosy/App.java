@@ -5,6 +5,8 @@ import felosy.services.GoldDataService;
 import felosy.services.RealEstateDataService;
 import felosy.services.StockDataService;
 import felosy.authentication.User;
+import felosy.assetmanagement.Portfolio;
+import felosy.storage.DataStorage;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -66,6 +68,14 @@ public class    App extends Application {
         StockDataService.getInstance().shutdown();
     }
 
+    public static Portfolio getCurrentPortfolio() {
+        if (getCurrentUser() == null) return null;
+        java.util.List<Portfolio> portfolios = DataStorage.loadUserPortfolios(getCurrentUser().getUserId());
+        if (portfolios != null && !portfolios.isEmpty()) {
+            return portfolios.get(0); // Return the first portfolio for now
+        }
+        return null;
+    }
 
     public static void main(String[] args) {
         launch();

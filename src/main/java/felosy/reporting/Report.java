@@ -14,6 +14,10 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import felosy.authentication.User;
 import felosy.assetmanagement.Portfolio;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 /**
  * Report class for generating various types of financial reports
@@ -77,12 +81,17 @@ public class Report extends BaseReport {
         
         // Add user information if available
         if (user != null) {
-            content.append(generateUserSection());
+            content.append(generateDetailedUserSection());
         }
         
         // Add portfolio information if available
         if (portfolio != null) {
-            content.append(generatePortfolioSection());
+            content.append(generateDetailedPortfolioSection());
+        }
+        
+        // Add assets information if available
+        if (portfolio != null) {
+            content.append(generateDetailedAssetsSection());
         }
         
         // Add report data
@@ -105,17 +114,20 @@ public class Report extends BaseReport {
         return header.toString();
     }
     
-    private String generateUserSection() {
+    private String generateDetailedUserSection() {
+        if (user == null) return "";
         StringBuilder section = new StringBuilder();
         section.append("=== User Information ===\n");
         section.append("User ID: ").append(user.getUserId()).append("\n");
         section.append("Name: ").append(user.getUserName()).append("\n");
         section.append("Email: ").append(user.getEmail()).append("\n");
-        // section.append("User Category: ").append(user.getUserCategory()).append("\n\n");
+        section.append("Current Wealth: $").append(String.format("%,.2f", user.getCurrentWealth())).append("\n");
+        section.append("Confirmed: ").append(user.isConfirmed() ? "Yes" : "No").append("\n\n");
         return section.toString();
     }
     
-    private String generatePortfolioSection() {
+    private String generateDetailedPortfolioSection() {
+        if (portfolio == null) return "";
         StringBuilder section = new StringBuilder();
         section.append("=== Portfolio Information ===\n");
         section.append("Portfolio ID: ").append(portfolio.getPortfolioId()).append("\n");
@@ -125,6 +137,61 @@ public class Report extends BaseReport {
         section.append("Number of Assets: ").append(portfolio.getAssets().size()).append("\n");
         section.append("Last Updated: ").append(DATE_FORMAT.format(portfolio.getLastUpdated())).append("\n\n");
         return section.toString();
+    }
+    
+    private String generateDetailedAssetsSection() {
+        if (portfolio == null || portfolio.getAssets().isEmpty()) return "No assets found.\n";
+        StringBuilder section = new StringBuilder();
+        section.append("=== Assets & Investments ===\n");
+        int idx = 1;
+        for (felosy.assetmanagement.Asset asset : portfolio.getAssets()) {
+            section.append("Asset #").append(idx++).append("\n");
+            section.append(generateAssetDetails(asset));
+            section.append("\n");
+        }
+        return section.toString();
+    }
+    
+    private String generateAssetDetails(felosy.assetmanagement.Asset asset) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Type: ").append(asset.getClass().getSimpleName()).append("\n");
+        sb.append("Asset ID: ").append(asset.getAssetId()).append("\n");
+        sb.append("Name: ").append(asset.getName()).append("\n");
+        sb.append("Purchase Date: ").append(DATE_FORMAT.format(asset.getPurchaseDate())).append("\n");
+        sb.append("Purchase Price: ").append(formatCurrency(asset.getPurchasePrice())).append("\n");
+        sb.append("Current Value: ").append(formatCurrency(asset.getCurrentValue())).append("\n");
+        sb.append("Action Date: ").append(DATE_FORMAT.format(asset.getActionDate())).append("\n");
+        sb.append("Return: ").append(formatValue(asset.calculateReturn())).append("\n");
+        // Type-specific details
+        if (asset instanceof felosy.assetmanagement.Stock stock) {
+            sb.append("Ticker: ").append(stock.getTicker()).append("\n");
+            sb.append("Exchange: ").append(stock.getExchange()).append("\n");
+            sb.append("Shares Owned: ").append(stock.getSharesOwned()).append("\n");
+            sb.append("Dividend Yield: ").append(formatValue(stock.getDividendYield())).append("\n");
+            sb.append("EPS: ").append(formatValue(stock.getEps())).append("\n");
+            sb.append("P/E Ratio: ").append(formatValue(stock.calculatePERatio())).append("\n");
+            sb.append("Annual Dividend: ").append(formatValue(stock.calculateDividend())).append("\n");
+            sb.append("Transaction History: ").append(stock.getTransactionHistory().size()).append(" transactions\n");
+        } else if (asset instanceof felosy.assetmanagement.Gold gold) {
+            sb.append("Weight (grams): ").append(gold.getWeightGrams()).append("\n");
+            sb.append("Purity: ").append(gold.getPurity()).append(" (" + gold.getPurity().multiply(new java.math.BigDecimal("24")) + "K)\n");
+            sb.append("Calculated Value: ").append(formatCurrency(gold.calculateValue())).append("\n");
+        } else if (asset instanceof felosy.assetmanagement.RealEstate realEstate) {
+            sb.append("Location: ").append(realEstate.getLocation()).append("\n");
+            sb.append("Area (sq.m): ").append(realEstate.getAreaSquareMeters()).append("\n");
+            sb.append("Property Type: ").append(realEstate.getPropertyType()).append("\n");
+            sb.append("Monthly Rental Income: ").append(formatCurrency(realEstate.getMonthlyRentalIncome())).append("\n");
+            sb.append("Occupancy Rate: ").append(formatValue(realEstate.getOccupancyRate())).append("\n");
+            sb.append("Annual Property Tax: ").append(formatCurrency(realEstate.getAnnualPropertyTax())).append("\n");
+            sb.append("Annual Maintenance Cost: ").append(formatCurrency(realEstate.getAnnualMaintenanceCost())).append("\n");
+            sb.append("Annual Insurance Cost: ").append(formatCurrency(realEstate.getAnnualInsuranceCost())).append("\n");
+            sb.append("Cap Rate: ").append(formatValue(realEstate.calculateCapRate())).append("\n");
+            sb.append("ROI: ").append(formatValue(realEstate.calculateROI())).append("\n");
+        } else if (asset instanceof felosy.assetmanagement.Cryptocurrency crypto) {
+            sb.append("Coin: ").append(crypto.getCoin()).append("\n");
+            sb.append("Amount: ").append(crypto.getAmount()).append("\n");
+        }
+        return sb.toString();
     }
     
     private String generateDataSection() {
@@ -220,9 +287,82 @@ public class Report extends BaseReport {
     }
     
     private boolean exportAsPDF() {
-        // TODO: Implement PDF export
-        System.out.println("Exporting report as PDF: " + getFileName("pdf"));
-        return true;
+        String fileName = getFileName("pdf");
+        String content = generateContent();
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+            PDPageContentStream contentStream = new PDPageContentStream(document, page);
+            contentStream.beginText();
+            contentStream.setFont(PDType1Font.COURIER, 10);
+            contentStream.setLeading(12f);
+            contentStream.newLineAtOffset(50, 700);
+            int lineCount = 0;
+            for (String line : content.split("\n")) {
+                contentStream.showText(line);
+                contentStream.newLine();
+                lineCount++;
+                if (lineCount == 45) {
+                    contentStream.endText();
+                    contentStream.close();
+                    page = new PDPage();
+                    document.addPage(page);
+                    contentStream = new PDPageContentStream(document, page);
+                    contentStream.beginText();
+                    contentStream.setFont(PDType1Font.COURIER, 10);
+                    contentStream.setLeading(12f);
+                    contentStream.newLineAtOffset(50, 700);
+                    lineCount = 0;
+                }
+            }
+            contentStream.endText();
+            contentStream.close();
+            document.save(fileName);
+            System.out.println("Exported PDF: " + fileName);
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to export PDF", e);
+            return false;
+        }
+    }
+    
+    public boolean exportAsPDF(String filePath) {
+        String content = generateContent();
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+            PDPageContentStream contentStream = new PDPageContentStream(document, page);
+            contentStream.beginText();
+            contentStream.setFont(PDType1Font.COURIER, 10);
+            contentStream.setLeading(12f);
+            contentStream.newLineAtOffset(50, 700);
+            int lineCount = 0;
+            for (String line : content.split("\n")) {
+                contentStream.showText(line);
+                contentStream.newLine();
+                lineCount++;
+                if (lineCount == 45) {
+                    contentStream.endText();
+                    contentStream.close();
+                    page = new PDPage();
+                    document.addPage(page);
+                    contentStream = new PDPageContentStream(document, page);
+                    contentStream.beginText();
+                    contentStream.setFont(PDType1Font.COURIER, 10);
+                    contentStream.setLeading(12f);
+                    contentStream.newLineAtOffset(50, 700);
+                    lineCount = 0;
+                }
+            }
+            contentStream.endText();
+            contentStream.close();
+            document.save(filePath);
+            System.out.println("Exported PDF: " + filePath);
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to export PDF", e);
+            return false;
+        }
     }
     
     private boolean exportAsExcel() {

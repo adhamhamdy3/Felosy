@@ -13,7 +13,8 @@ module felosy {
     // JSON library requirement
     requires org.json;
     requires java.base;
-    
+    requires org.apache.pdfbox;
+
     // Original exports
     opens felosy to javafx.fxml;
     exports felosy;

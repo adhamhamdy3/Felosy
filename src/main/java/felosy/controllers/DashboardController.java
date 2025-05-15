@@ -85,8 +85,55 @@ public class DashboardController {
         result.ifPresent(arr -> {
             String format = arr[0];
             String path = arr[1];
-            // TODO: Handle export logic here
-            System.out.println("Selected format: " + format + ", path: " + path);
+            if ("PDF".equalsIgnoreCase(format)) {
+                // Example: get current user and portfolio, then create and export the report
+                felosy.authentication.User user = App.getCurrentUser();
+                felosy.assetmanagement.Portfolio portfolio = App.getCurrentPortfolio();
+                if (user != null && portfolio == null) {
+                    // Create and save a default portfolio for the user
+                    portfolio = new felosy.assetmanagement.Portfolio(user.getUserId());
+                    felosy.storage.DataStorage.savePortfolio(portfolio);
+                    // Re-fetch to ensure it's loaded as expected
+                    portfolio = App.getCurrentPortfolio();
+                }
+                if (user != null && portfolio != null) {
+                    felosy.reporting.Report report = new felosy.reporting.Report(
+                        java.util.UUID.randomUUID().toString(),
+                        "Portfolio Report",
+                        new java.util.Date(),
+                        user
+                    );
+                    report.setPortfolio(portfolio);
+                    report.setFormat(felosy.reporting.Report.ReportFormat.PDF);
+                    boolean success = report.exportAsPDF(path);
+                    if (success) {
+                        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+                        alert.setTitle("Export Successful");
+                        alert.setHeaderText(null);
+                        alert.setContentText("PDF report exported successfully to:\n" + path);
+                        alert.showAndWait();
+                    } else {
+                        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                        alert.setTitle("Export Failed");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Failed to export PDF report.");
+                        alert.showAndWait();
+                    }
+                } else {
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                    alert.setTitle("Export Failed");
+                    alert.setHeaderText(null);
+                    alert.setContentText("User or portfolio not found.");
+                    alert.showAndWait();
+                }
+            } else {
+                // TODO: Implement Excel export
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+                alert.setTitle("Export");
+                alert.setHeaderText(null);
+                alert.setContentText("Excel export is not implemented yet.");
+                alert.showAndWait();
+            }
         });
     }
 
