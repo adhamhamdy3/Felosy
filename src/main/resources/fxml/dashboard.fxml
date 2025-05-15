@@ -28,7 +28,7 @@
                   <Button fx:id="assetsInvestments_btn" mnemonicParsing="false" onAction="#switchToAssetsInvestments" prefWidth="200.0" text="Assets and Investments ">
                   </Button>
                   <Button fx:id="zakatComp_btn" mnemonicParsing="false" onAction="#switchToZakatAndCompliance" prefWidth="200.0" text="Zakat and Compliance" />
-                  <Button fx:id="reports_btn" mnemonicParsing="false" prefWidth="200.0" text="Reports" />
+                  <Button fx:id="reports_btn" mnemonicParsing="false" onAction="#handleReportsClick" prefWidth="200.0" text="Reports" />
                   <Button fx:id="logout_btn" mnemonicParsing="false" onAction="#handleLogOutClick" prefWidth="200.0" text="Log out" textFill="RED">
                      <VBox.margin>
                         <Insets top="20.0" />
